@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Sydney suburbs</title>
+  <script src="src/nomodules.js" nomodule></script>
+
   <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.css' rel='stylesheet' />
   <link rel="stylesheet" href="main.css" type="text/css" />
 </head>
@@ -11,11 +13,13 @@
   <div id="question-wrapper" hidden>
     <p id="suburb-name"></p>
     <button id="no-idea-button">No idea</button>
+
+    <button id="next-button" hidden>Next suburb</button>
   </div>
   <div id="hint"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@5.1.6/turf.min.js"></script>
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.js'></script>
-  <script src="mapbox.js"></script>
+  <script type="module" src="src/index.mjs"></script>
 </body>
 </html>

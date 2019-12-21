@@ -8,6 +8,16 @@ p {
   margin: 0;
 }
 
+button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background: steelblue;
+  color: white;
+  font-size: inherit;
+  cursor: pointer;
+}
+
 #map {
   width: 100vw;
   height: 100vh;
@@ -28,13 +38,10 @@ p {
 
 #no-idea-button {
   margin-top: 8px;
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
-  background: steelblue;
-  color: white;
-  font-size: inherit;
-  cursor: pointer;
+}
+
+#next-button {
+  margin-top: 8px;
 }
 
 #hint {
