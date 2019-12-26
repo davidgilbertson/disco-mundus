@@ -103,6 +103,8 @@ const updateAnswerHistory = score => {
   // But if anything comes back from the server on page load, LS is ignored.
   storage.set(STORAGE_KEYS.ANSWER_HISTORY, utils.mapToArray(answerHistoryMap));
 
+  // This setup kinda-sorta handles temporarily going offline.
+  // If you answer two questions in a tunnel with no reception, then a third when back online, everything is saved
   cab.update(progressId, {answerHistory: utils.mapToArray(answerHistoryMap)})
     .then(response => {
       if (response.error) {
@@ -114,6 +116,25 @@ const updateAnswerHistory = score => {
 };
 
 export const getCurrentQuestion = () => currentQuestion;
+
+export const getStats = () => {
+  let today = 0;
+  let unseen = 0;
+  let future = 0;
+  const now = Date.now();
+
+  allQuestionFeatures.forEach(feature => {
+    if (!feature.properties.nextAskDate) {
+      unseen++;
+    } else if (feature.properties.nextAskDate < now) {
+      today++;
+    } else {
+      future++
+    }
+  });
+
+  return {today, unseen, future};
+};
 
 /**
  * Returns the next question due to be reviewed, or if there are none, a not-seen-yet question
@@ -186,7 +207,6 @@ export const init = ({questionFeatureCollection, answerHistory, id}) => {
   // For now, check to see if there was any history stored in LS. This can be removed eventually so I'll no
   // longer store progress in LS.
   if (!answerHistory.length) {
-    console.log('> converting LS');
     const localAnswerHistory = storage.get(STORAGE_KEYS.ANSWER_HISTORY) || [];
     if (localAnswerHistory && localAnswerHistory.length) {
       // Take it out of LS

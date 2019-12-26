@@ -122,8 +122,6 @@ export const init = ({onFeatureClick}) => new Promise(resolve => {
 
       clearStatuses(FEATURE_STATUS.HOVERED);
 
-      dom.setHintText(e.features[0].properties.name);
-
       // Only if this feature doesn't have some sort of status already, hover it
       if (!featuresWithStatus.get(thisFeatureId)) {
         hover(thisFeatureId);
@@ -136,8 +134,6 @@ export const init = ({onFeatureClick}) => new Promise(resolve => {
     map.getCanvas().style.cursor = '';
     lastHoveredFeatureId = null;
     clearStatuses(FEATURE_STATUS.HOVERED);
-
-    dom.setHintText('');
   });
 
   map.on('click', MAP_LAYERS.SUBURBS, e => {

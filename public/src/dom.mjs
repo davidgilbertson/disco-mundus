@@ -2,7 +2,7 @@ const noIdeaButton = document.getElementById('no-idea-button');
 const nextButton = document.getElementById('next-button');
 const questionWrapper = document.getElementById('question-wrapper');
 const suburbName = document.getElementById('question-name');
-const hint = document.getElementById('hint');
+const statsEl = document.getElementById('stats');
 
 export const setQuestionNameInnerHTML = textContent => {
   suburbName.innerHTML = textContent;
@@ -34,8 +34,14 @@ export const onClickNextButton = func => {
   nextButton.addEventListener('click', func);
 };
 
-export const setHintText = textContent => {
-  hint.textContent = textContent;
+export const setStatsText = ({today, unseen, future}) => {
+  statsEl.innerHTML = [
+    `Review now: ${today}`,
+    '<span class="stats-spacer">|</span>',
+    `Review later: ${future}`,
+    '<span class="stats-spacer">|</span>',
+    `Unseen: ${unseen}`,
+  ].join('');
 };
 
 export const onClickNoIdeaButton = func => {

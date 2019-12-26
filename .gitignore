@@ -1,4 +1,5 @@
 .idea
+.firebase
 node_modules
 
 hosting.*.cache

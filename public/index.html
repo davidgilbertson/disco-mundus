@@ -3,33 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <title>Sydney suburbs</title>
+
   <script src="src/nomodules.js" nomodule></script>
 
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no,minimal-ui">
-  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.css' rel='stylesheet' />
 
-  <link rel="modulepreload" href="src/cab.mjs" />
-  <link rel="modulepreload" href="src/constants.mjs" />
-  <link rel="modulepreload" href="src/distance.mjs" />
-  <link rel="modulepreload" href="src/dom.mjs" />
-  <link rel="modulepreload" href="src/geoUtils.mjs" />
-  <link rel="modulepreload" href="src/index.mjs" />
-  <link rel="modulepreload" href="src/mapbox.mjs" />
-  <link rel="modulepreload" href="src/questions.mjs" />
-  <link rel="modulepreload" href="src/storage.mjs" />
-  <link rel="modulepreload" href="src/timeUtils.mjs" />
-  <link rel="modulepreload" href="src/utils.mjs" />
-  <link rel="stylesheet" href="src/main.css" type="text/css" />
+  <meta name="theme-color" content="#009688">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <link rel="modulepreload" href="src/cab.mjs">
+  <link rel="modulepreload" href="src/constants.mjs">
+  <link rel="modulepreload" href="src/distance.mjs">
+  <link rel="modulepreload" href="src/dom.mjs">
+  <link rel="modulepreload" href="src/geoUtils.mjs">
+  <link rel="modulepreload" href="src/index.mjs">
+  <link rel="modulepreload" href="src/mapbox.mjs">
+  <link rel="modulepreload" href="src/questions.mjs">
+  <link rel="modulepreload" href="src/storage.mjs">
+  <link rel="modulepreload" href="src/timeUtils.mjs">
+  <link rel="modulepreload" href="src/utils.mjs">
+
+  <link rel="stylesheet" href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.css">
+  <link rel="stylesheet" href="src/main.css">
 </head>
 <body>
-  <div id="map"></div>
-  <div id="question-wrapper" hidden>
-    <p id="question-name"></p>
-    <button id="no-idea-button">No idea</button>
+  <div id="app">
+    <div id="map"></div>
 
-    <button id="next-button" hidden>Next question</button>
+    <div id="question-wrapper" hidden>
+      <p id="question-name"></p>
+      <button id="no-idea-button">No idea</button>
+
+      <button id="next-button" hidden>Next question</button>
+    </div>
+
+    <div id="stats"></div>
   </div>
-  <div id="hint"></div>
 
   <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.js'></script>
   <script type="module" src="src/index.mjs"></script>

@@ -23,11 +23,24 @@
         ]
       },
       {
-        "source": "**/*.@(mjs|json)",
+        "source": "**/*.@(png|ico)",
+        "headers": [
+          {
+            "key": "cache-control",
+            "value": "public"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|mjs|json|css|webmanifest)",
         "headers": [
           {
             "key": "cache-control",
             "value": "no-cache"
+          },
+          {
+            "key": "last-modified",
+            "value": "Sat, 01 Jan 2000 00:00:00 GMT"
           }
         ]
       }

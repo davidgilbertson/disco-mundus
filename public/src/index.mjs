@@ -71,6 +71,8 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
   `;
 
   dom.setQuestionNameInnerHTML(questionText);
+
+  dom.setStatsText(questions.getStats());
 };
 
 dom.onClickNoIdeaButton(() => {
@@ -86,19 +88,38 @@ dom.onClickNextButton(() => {
 
 const getOrCreateHistory = async () => {
   // Changing this string would break progress for all users. So don't do that.
-  const URL_PARAM_STRING = 'your-progress-id';
+  const PROGRESS_ID_STRING = 'your-progress-id';
 
+  // Get the ID from the URL
   const url = new URL(document.location);
-  const id = url.searchParams.get(URL_PARAM_STRING);
+  let id = url.searchParams.get(PROGRESS_ID_STRING);
+
+  // Or if none, try local storage
+  if (!id) {
+    id = localStorage.getItem(PROGRESS_ID_STRING);
+
+    // So, the ID wasn't in the URL but was in storage. So put it in the URL
+    if (id) {
+      url.searchParams.set(PROGRESS_ID_STRING, id);
+      window.history.replaceState('', null, url.href);
+    }
+  } else {
+    // If it was in the URL, put it in storage too
+    // We want this in LS because the 'installed' version of the site
+    // won't have the URL param
+    localStorage.setItem(PROGRESS_ID_STRING, id);
+  }
 
   if (id) {
     const response = await cab.read(id);
+
     if (!response.error) {
       return {
         answerHistory: response.answerHistory,
         id: id,
       };
     }
+
     console.error('Seems like that was a bad ID.', response.error);
   }
 
@@ -107,8 +128,11 @@ const getOrCreateHistory = async () => {
 
   if (!response.error) {
     // We've got a new ID, put it in the URL
-    url.searchParams.set(URL_PARAM_STRING, response.id);
+    url.searchParams.set(PROGRESS_ID_STRING, response.id);
     window.history.replaceState('', null, url.href);
+
+    // And LS too, for good measure
+    localStorage.setItem(PROGRESS_ID_STRING, response.id);
 
     return {
       answerHistory: [],
@@ -140,6 +164,7 @@ const getOrCreateHistory = async () => {
     id: historyData.id,
   }));
 
+  dom.setStatsText(questions.getStats());
   askNextQuestion();
 })();
 
