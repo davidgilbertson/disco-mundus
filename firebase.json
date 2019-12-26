@@ -1,0 +1,36 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.mjs",
+        "headers": [
+          {
+            "key": "content-type",
+            "value": "application/javascript"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(mjs|json)",
+        "headers": [
+          {
+            "key": "cache-control",
+            "value": "no-cache"
+          }
+        ]
+      }
+    ]
+  }
+}

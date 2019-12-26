@@ -1,0 +1,15 @@
+export const MAP_LAYERS = {
+  SUBURBS: 'SUBURBS',
+};
+
+export const FEATURE_STATUS = {
+  SELECTED: 'SELECTED',
+  NONE: 'NONE',
+  HOVERED: 'HOVERED',
+  RIGHT: 'RIGHT',
+  WRONG: 'WRONG',
+};
+
+export const STORAGE_KEYS = {
+  ANSWER_HISTORY: 'ANSWER_HISTORY',
+};
