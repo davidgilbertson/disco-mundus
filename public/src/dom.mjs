@@ -5,7 +5,7 @@ const suburbName = document.getElementById('question-name');
 const hint = document.getElementById('hint');
 
 export const setQuestionNameInnerHTML = textContent => {
-  suburbName.innerHTML = textContent; // innerHTML FTW!
+  suburbName.innerHTML = textContent;
 };
 
 export const showQuestionWrapper = () => {

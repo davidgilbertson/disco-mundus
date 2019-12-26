@@ -30,14 +30,15 @@ export const getIntervalAsWords = millis => {
 
   const weeks = Math.round(days / 7);
   if (weeks < 2) return 'a week';
-  if (weeks < 5) return `${weeks} weeks`;
+  if (weeks < 3) return 'a week and a bit';
+  if (weeks < 4) return `${weeks} weeks`;
 
   const months = Math.round(days / 30);
-  if (months < 2) return '1 month';
+  if (months < 2) return 'a month';
   if (months < 11) return `${months} months`;
 
   const years = Math.round(days / 365);
-  if (years < 2) return '1 year';
+  if (years < 2) return 'a year';
 
   return `${years} years`;
 };

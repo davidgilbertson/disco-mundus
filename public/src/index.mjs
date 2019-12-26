@@ -46,8 +46,6 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
       } else {
         questionText = 'Now you know.';
       }
-    } else if (score < 0.4) {
-      questionText = 'Wrong, but in the general vicinity.';
     } else if (score < 0.6) {
       questionText = 'Wrong, but could be wronger.';
     } else if (score < 0.8) {
@@ -55,7 +53,6 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
     } else {
       questionText = 'Wrong, but very close!';
     }
-
 
     const rightAnswer = questions.getCurrentQuestion();
     mapbox.markRight(rightAnswer.id);
