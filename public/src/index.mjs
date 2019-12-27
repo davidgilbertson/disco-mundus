@@ -166,5 +166,10 @@ const getOrCreateHistory = async () => {
 
   dom.setStatsText(questions.getStats());
   askNextQuestion();
-})();
 
+  // We want to refresh the stats if the user comes back after a while
+  // Particularly on the mobile as an 'installed' app where it doesn't refresh
+  window.addEventListener('focus', () => {
+    dom.setStatsText(questions.getStats());
+  });
+})();
