@@ -2,13 +2,12 @@ export const arrayToMap = arr => new Map(arr.map(item => [item.id, item]));
 
 export const mapToArray = map => Array.from(map.values());
 
-export const updateFeatureProps = (feature, props) => ({
-  ...feature,
-  properties: {
-    ...feature.properties,
-    ...props,
-  },
-});
+export const updateFeatureProps = (feature, props) => Object.assign({},
+  feature,
+  {
+    properties: Object.assign({}, feature.properties, props),
+  }
+);
 
 /**
  * Converts a duration into a readable string

@@ -94,10 +94,10 @@ const updateAnswerHistory = score => {
   });
 
   // And the history data to save
-  answerHistoryMap.set(currentQuestion.id, {
-    id: currentQuestion.id,
-    ...dateProps,
-  });
+  answerHistoryMap.set(currentQuestion.id, Object.assign({},
+    {id: currentQuestion.id},
+    dateProps
+  ));
 
   // For now, while testing, I'll keep saving to LS.
   // But if anything comes back from the server on page load, LS is ignored.
@@ -207,12 +207,11 @@ export const init = ({questionFeatureCollection, answerHistory, id}) => {
   // For now, check to see if there was any history stored in LS. This can be removed eventually so I'll no
   // longer store progress in LS.
   if (!answerHistory.length) {
-    const localAnswerHistory = storage.get(STORAGE_KEYS.ANSWER_HISTORY) || [];
-    if (localAnswerHistory && localAnswerHistory.length) {
-      // Take it out of LS
-      answerHistoryMap = utils.arrayToMap(localAnswerHistory);
+    const localAnswerHistory = storage.get(STORAGE_KEYS.ANSWER_HISTORY);
+    answerHistoryMap = utils.arrayToMap(localAnswerHistory || []);
 
-      // And save it to the server
+    if (localAnswerHistory && localAnswerHistory.length) {
+      // Take it out of LS And save it to the server
       cab.update(progressId, {answerHistory: utils.mapToArray(answerHistoryMap)})
         .then(response => {
           if (response.error) {

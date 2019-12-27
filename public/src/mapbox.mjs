@@ -1,9 +1,8 @@
 /**
  * This file looks after loading the map and any map data, including suburbs.
- * Any logic ...
+ * Any logic that interacts with the map goes in here
  */
 import {MAP_LAYERS, FEATURE_STATUS} from './constants.mjs';
-import * as dom from "./dom.mjs";
 import * as geoUtils from './geoUtils.mjs';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGF2aWRnNzA3IiwiYSI6ImNqZWVxaGtnazF2czAyeXFlcDlvY2kwZDQifQ.WSmiQO0ccl85_FvEDTsBmw';
