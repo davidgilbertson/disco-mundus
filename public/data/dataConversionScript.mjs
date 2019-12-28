@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const suburbData = fs.readFileSync('./questionFeatureCollection.json', 'utf8');
+const suburbData = fs.readFileSync('./sydneySuburbs.json', 'utf8');
 const suburbFeatureCollection = JSON.parse(suburbData);
 
 suburbFeatureCollection.features = suburbFeatureCollection.features.map(suburb => ({
@@ -12,6 +12,6 @@ suburbFeatureCollection.features = suburbFeatureCollection.features.map(suburb =
 }));
 
 fs.writeFileSync(
-  './questionFeatureCollection.json',
+  './sydneySuburbs.json',
   JSON.stringify(suburbFeatureCollection, null, 2)
 );

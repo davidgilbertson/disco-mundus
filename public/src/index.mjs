@@ -151,7 +151,7 @@ const getOrCreateHistory = async () => {
   // * history data
   // * the map
   const [questionFeatureCollection, historyData] = await Promise.all([
-    fetch('data/questionFeatureCollection.json').then(response => response.json()),
+    fetch('data/sydneySuburbs.json').then(response => response.json()),
     getOrCreateHistory(),
     mapbox.init({onFeatureClick: handleResponse}),
   ]);

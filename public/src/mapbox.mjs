@@ -157,7 +157,7 @@ export const init = ({onFeatureClick}) => new Promise(resolve => {
     }
   });
 
-  // When the mouse leaves the layer, e.g. goes outside Sydney (NOT leaves a feature)
+  // When the mouse leaves the layer
   map.on('mouseleave', MAP_LAYERS.SUBURBS, () => {
     map.getCanvas().style.cursor = '';
     lastHoveredFeatureId = null;
