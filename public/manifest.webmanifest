@@ -2,7 +2,7 @@
   "name": "Disco mundus",
   "short_name": "Disco mundus",
   "display": "minimal-ui",
-  "start_url": "",
+  "start_url": "/index.html",
   "theme_color": "#009688",
   "icons": [
     {
