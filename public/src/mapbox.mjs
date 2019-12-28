@@ -113,7 +113,7 @@ export const init = ({onFeatureClick}) => new Promise(resolve => {
 
   map.on('mousemove', MAP_LAYERS.SUBURBS, e => {
     if (e.features.length > 0) {
-      const thisFeatureId = e.features[0].id;
+      const thisFeatureId = e.features[e.features.length - 1].id;
       // If the mouse is still on the same hovered feature, bail
       if (lastHoveredFeatureId && thisFeatureId === lastHoveredFeatureId) return;
 
@@ -137,8 +137,9 @@ export const init = ({onFeatureClick}) => new Promise(resolve => {
 
   map.on('click', MAP_LAYERS.SUBURBS, e => {
     if (e.features.length > 0) {
+      const topFeature = e.features[e.features.length - 1];
       const featureCollection = map.getSource(MAP_LAYERS.SUBURBS).serialize().data;
-      const clickedFeature = featureCollection.features.find(feature => feature.id === e.features[0].id);
+      const clickedFeature = featureCollection.features.find(feature => feature.id === topFeature.id);
       const featureIsAlreadySelected = featuresWithStatus.get(clickedFeature.id) === FEATURE_STATUS.SELECTED;
 
       clearStatuses();
