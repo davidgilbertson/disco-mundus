@@ -1,5 +1,10 @@
 export const MAP_LAYERS = {
   SUBURBS: 'SUBURBS',
+  SUBURBS_LINE: 'SUBURBS_LINE',
+};
+
+export const MAP_SOURCES = {
+  SUBURBS: 'SUBURBS',
 };
 
 export const FEATURE_STATUS = {

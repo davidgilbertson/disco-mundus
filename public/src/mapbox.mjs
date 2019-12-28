@@ -2,7 +2,7 @@
  * This file looks after loading the map and any map data, including suburbs.
  * Any logic that interacts with the map goes in here
  */
-import {MAP_LAYERS, FEATURE_STATUS} from './constants.mjs';
+import {MAP_LAYERS, FEATURE_STATUS, MAP_SOURCES} from './constants.mjs';
 import * as geoUtils from './geoUtils.mjs';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGF2aWRnNzA3IiwiYSI6ImNqZWVxaGtnazF2czAyeXFlcDlvY2kwZDQifQ.WSmiQO0ccl85_FvEDTsBmw';
@@ -75,31 +75,60 @@ export const markRight = featureId => {
 const hover = featureId => {
   setStatus({featureId, status: FEATURE_STATUS.HOVERED});
 };
-export const addSuburbsLayer = suburbsFeatureCollection => map.addLayer({
-  id: MAP_LAYERS.SUBURBS,
-  type: 'fill',
-  source: {
+export const addSuburbsLayer = suburbsFeatureCollection => {
+  map.addSource(MAP_SOURCES.SUBURBS, {
     type: 'geojson',
     data: suburbsFeatureCollection,
-  },
-  paint: {
-    'fill-color': [
-      'match',
-      ['feature-state', 'status'],
-      FEATURE_STATUS.WRONG, 'rgba(240, 0, 0, 0.4)',
-      FEATURE_STATUS.RIGHT, 'rgba(0, 200, 0, 0.4)',
-      FEATURE_STATUS.SELECTED, 'rgba(0,97,200,0.3)',
-      FEATURE_STATUS.HOVERED, 'rgba(0, 97, 200, 0.1)',
-      'rgba(0, 0, 0, 0)'
-    ],
-    'fill-outline-color': 'rgba(0, 0, 0, 0.4)',
-  },
-});
+  });
+
+  map.addLayer({
+    id: MAP_LAYERS.SUBURBS,
+    source: MAP_SOURCES.SUBURBS,
+    type: 'fill',
+    paint: {
+      'fill-color': [
+        'match',
+        ['feature-state', 'status'],
+        FEATURE_STATUS.WRONG, 'rgba(240, 0, 0, 0.2)',
+        FEATURE_STATUS.RIGHT, 'rgba(0, 200, 0, 0.2)',
+        FEATURE_STATUS.SELECTED, 'rgba(0, 97, 200, 0.1)',
+        'rgba(0, 0, 0, 0)' // not visible
+      ],
+    },
+  });
+
+  map.addLayer({
+    id: MAP_LAYERS.SUBURBS_LINE,
+    source: MAP_SOURCES.SUBURBS,
+    type: 'line',
+    paint: {
+      'line-color': [
+        'match',
+        ['feature-state', 'status'],
+        FEATURE_STATUS.WRONG, 'rgba(240, 0, 0, 1)',
+        FEATURE_STATUS.RIGHT, 'rgba(0, 200, 0, 1)',
+        FEATURE_STATUS.SELECTED, 'rgba(0, 97, 200, 1)',
+        FEATURE_STATUS.HOVERED, 'rgba(255, 255, 255, 1)',
+        'rgba(255, 255, 255, 0.3)'
+      ],
+      'line-width': [
+        'match',
+        ['feature-state', 'status'],
+        FEATURE_STATUS.WRONG, 3,
+        FEATURE_STATUS.RIGHT, 3,
+        FEATURE_STATUS.SELECTED, 3,
+        FEATURE_STATUS.HOVERED, 1,
+        0.5
+      ],
+    },
+  });
+};
 
 export const init = ({onFeatureClick}) => new Promise(resolve => {
   map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/streets-v11',
+    // style: 'mapbox://styles/mapbox/streets-v11',
+    style: 'mapbox://styles/mapbox/satellite-streets-v9',
     center: {
       lng: 151.09599472830712,
       lat: -33.856237652995084,
