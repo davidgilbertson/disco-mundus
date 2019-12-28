@@ -4,6 +4,8 @@ const questionWrapper = document.getElementById('question-wrapper');
 const suburbName = document.getElementById('question-name');
 const statsEl = document.getElementById('stats');
 
+let isTouch = false;
+
 export const setQuestionNameInnerHTML = textContent => {
   suburbName.innerHTML = textContent;
 };
@@ -14,7 +16,7 @@ export const showQuestionWrapper = () => {
 
 export const showNoIdeaButton = () => {
   noIdeaButton.hidden = false;
-  noIdeaButton.focus();
+  if (!isTouch) noIdeaButton.focus();
 };
 
 export const hideNoIdeaButton = () => {
@@ -23,7 +25,7 @@ export const hideNoIdeaButton = () => {
 
 export const showNextButton = () => {
   nextButton.hidden = false;
-  nextButton.focus();
+  if (!isTouch) nextButton.focus();
 };
 
 export const hideNextButton = () => {
@@ -47,3 +49,10 @@ export const setStatsText = ({today, unseen, future}) => {
 export const onClickNoIdeaButton = func => {
   noIdeaButton.addEventListener('click', func);
 };
+
+// Somewhat dodgy logic to prevent the 'focus' ring on the buttons. This is a proxy for 'is a keyboard available',
+// since these users are less unlikely to want the enter/space shortcut of going to the next question.
+window.addEventListener('touchstart', function handleTouch() {
+  isTouch = true;
+  window.removeEventListener('touchstart', handleTouch);
+});
