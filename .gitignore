@@ -2,5 +2,4 @@
 .firebase
 node_modules
 
-hosting.*.cache
 firebase-debug.log
