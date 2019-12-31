@@ -115,7 +115,7 @@ const getOrCreateHistory = async () => {
 
     if (!response.error) {
       return {
-        answerHistory: response.answerHistory,
+        answerHistory: response.data.answerHistory,
         id: id,
       };
     }
