@@ -1,7 +1,8 @@
 import assert from 'assert';
-import {getNextAskDate, getIntervalAsWords} from './questions.mjs';
-import {daysToMillis} from './timeUtils.mjs';
-import distance from './distance.mjs';
+import {getNextAskDate} from './questions.mjs';
+import {getIntervalAsWords} from './utils/utils.mjs';
+import * as time from './utils/time.mjs';
+import distance from './utils/distance.mjs';
 
 const test = (name, func) => {
   try {
@@ -13,6 +14,7 @@ const test = (name, func) => {
 
 const now = 1000;
 global.Date.now = () => now;
+global.window = {};
 
 test('Should convert intervals to human words', () => {
   [
@@ -58,33 +60,33 @@ test('Should handle a repeat question answered correctly', () => {
   const nextAskDate = getNextAskDate({
     now,
     score: 1,
-    lastAskDate: now - daysToMillis(2),
+    lastAskDate: now - time.daysToMillis(2),
   });
 
   // Should be now + 4 days
-  assert.strictEqual(nextAskDate, now + daysToMillis(4));
+  assert.strictEqual(nextAskDate, now + time.daysToMillis(4));
 });
 
 test('Should handle a repeat question answered close but wrong', () => {
   const nextAskDate = getNextAskDate({
     now,
     score: 0.5,
-    lastAskDate: now - daysToMillis(2),
+    lastAskDate: now - time.daysToMillis(2),
   });
 
   // Should be now + 2 days again
-  assert.strictEqual(nextAskDate, now + daysToMillis(2));
+  assert.strictEqual(nextAskDate, now + time.daysToMillis(2));
 });
 
 test('Should handle a repeat question answered wrong', () => {
   const nextAskDate = getNextAskDate({
     now,
     score: 0,
-    lastAskDate: now - daysToMillis(2),
+    lastAskDate: now - time.daysToMillis(2),
   });
 
   // Should be now + 0.4 days
-  assert.strictEqual(nextAskDate, now + daysToMillis(0.4));
+  assert.strictEqual(nextAskDate, now + time.daysToMillis(0.4));
 });
 
 test('distance() should be close enough', () => {

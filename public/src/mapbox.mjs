@@ -2,8 +2,9 @@
  * This file looks after loading the map and any map data, including suburbs.
  * Any logic that interacts with the map goes in here
  */
-import {MAP_LAYERS, FEATURE_STATUS, MAP_SOURCES} from './constants.mjs';
-import * as geoUtils from './geoUtils.mjs';
+import {MAP_LAYERS, FEATURE_STATUS, MAP_SOURCES} from './utils/constants.mjs';
+import * as geo from './utils/geo.mjs';
+import * as questions from './questions.mjs';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGF2aWRnNzA3IiwiYSI6ImNqZWVxaGtnazF2czAyeXFlcDlvY2kwZDQifQ.WSmiQO0ccl85_FvEDTsBmw';
 
@@ -38,7 +39,6 @@ export const clearStatus = featureId => {
 };
 
 /**
- *
  * @param {string} [statusToClear] - only clear features with this particular status
  */
 export const clearStatuses = statusToClear => {
@@ -127,7 +127,6 @@ export const addSuburbsLayer = suburbsFeatureCollection => {
 export const init = ({onFeatureClick}) => new Promise(resolve => {
   map = new mapboxgl.Map({
     container: 'map',
-    // style: 'mapbox://styles/mapbox/streets-v11',
     style: 'mapbox://styles/mapbox/satellite-streets-v9',
     center: {
       lng: 151.09599472830712,
@@ -164,10 +163,22 @@ export const init = ({onFeatureClick}) => new Promise(resolve => {
     clearStatuses(FEATURE_STATUS.HOVERED);
   });
 
+  map.on('click', e => {
+    // Clicking on my house shows stats
+    const myHouseBounds = new mapboxgl.LngLatBounds([
+      {lng: 151.07749659127188, lat: -33.82599275017796},
+      {lng: 151.0783350111576, lat: -33.825089019351836}
+    ]);
+
+    if (myHouseBounds.contains(e.lngLat)) questions.generateAndPrintStats(true);
+  });
+
   map.on('click', MAP_LAYERS.SUBURBS, e => {
     if (e.features.length > 0) {
       const topFeature = e.features[e.features.length - 1];
       const featureCollection = map.getSource(MAP_LAYERS.SUBURBS).serialize().data;
+
+      /** @type {QuestionFeature} */
       const clickedFeature = featureCollection.features.find(feature => feature.id === topFeature.id);
       const featureIsAlreadySelected = featuresWithStatus.get(clickedFeature.id) === FEATURE_STATUS.SELECTED;
 
@@ -180,7 +191,7 @@ export const init = ({onFeatureClick}) => new Promise(resolve => {
         select(clickedFeature.id);
 
         addPopup({
-          lngLat: geoUtils.getTopPoint(clickedFeature),
+          lngLat: geo.getTopPoint(clickedFeature),
           text: clickedFeature.properties.name,
         });
       }

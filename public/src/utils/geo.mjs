@@ -1,6 +1,6 @@
 /**
  *
- * @param {Feature} polygon
+ * @param {QuestionFeature} polygon
  * @return {Array<number>} coordinates
  */
 export const getTopPoint = polygon => {

@@ -2,6 +2,11 @@ export const arrayToMap = arr => new Map(arr.map(item => [item.id, item]));
 
 export const mapToArray = map => Array.from(map.values());
 
+/**
+ * @param {QuestionFeature} feature
+ * @param {object} props
+ * @return {QuestionFeature}
+ */
 export const updateFeatureProps = (feature, props) => Object.assign({},
   feature,
   {
@@ -11,6 +16,7 @@ export const updateFeatureProps = (feature, props) => Object.assign({},
 
 /**
  * Converts a duration into a readable string
+ *
  * @param {number} millis - a period of time in milliseconds
  * @return {string}
  */

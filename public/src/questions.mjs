@@ -1,8 +1,8 @@
-import {minsToMillis} from './timeUtils.mjs';
-import distance from './distance.mjs';
-import * as storage from './storage.mjs';
-import {STORAGE_KEYS} from './constants.mjs';
-import * as utils from './utils.mjs';
+import distance from './utils/distance.mjs';
+import * as time from './utils/time.mjs';
+import * as storage from './utils/storage.mjs';
+import * as utils from './utils/utils.mjs';
+import {STORAGE_KEYS} from './utils/constants.mjs';
 import cab from './cab.mjs';
 
 /**
@@ -11,47 +11,74 @@ import cab from './cab.mjs';
  * @property {number} nextAskDate - date/time in milliseconds. Used to select the next question
  * @property {number} lastAskDate - date/time in milliseconds.
  *    Used to calculate the nextAskDate once a question is answered
- * @property {number} testing
  */
 
-let progressId;
+/**
+ * @typedef {number} DateTimeMillis - the date/time in milliseconds since the epoch
+ */
 
 /**
- * @type {Array<Feature>}
+ * It seems that extending Feature doesn't allow overwriting the properties object, so this
+ * creates a new definition and sets id/geometry manually
+ *
+ * @typedef QuestionFeature
+ * @property {number} id
+ * @property {object} properties
+ * @property {DateTimeMillis} [properties.nextAskDate] - date/time in milliseconds.
+ * @property {DateTimeMillis} [properties.lastAskDate] - date/time in milliseconds.
+ * @property {number} [properties.lastScore] - the score, between 0 and 1
+ * @property {Feature.geometry} geometry
+ */
+
+/** @type {string} */
+let userId;
+
+/**
+ * @type {Array<QuestionFeature>}
  */
 let allQuestionFeatures;
 
 /**
- * @type {Feature}
+ * @type {QuestionFeature}
  */
 let currentQuestion;
 
 /**
- * @type {Map<string, AnswerHistoryItem>}
+ * @type {Map<number, AnswerHistoryItem>}
  */
 let answerHistoryMap;
 
 /**
  * Returns the next date/time at which a question should be asked, based
- * on the last time it was asked and the score it was given this time
+ * on the last time it was asked and the score it was given this time.
+ *
+ * Note that SM-2 uses a multiplier between 1.3 and 2.5 ('easiness factor') that is unique to each question
+ * and adjusted with each answer. This is based on the idea that
+ * some things are inherently more difficult to commit to memory.
+ * It also resets a question back to the start with a wrong answer.
+ *
+ * I'm just using a multiplier of between 0.1 and 2, based on the answer score.
+ * E.g. if it's been 10 days since you last answered the question (meaning you got it right several times in a row), then if:
+ *  - you get it wrong (score 0): it will ask you in 1 day
+ *  - you get it close (score 0.5): it will ask you in another 10
+ *  - you get it right (score 1): it will ask you again in 20 days
+ *
  * @param {object} props
  * @param {number} props.now
  * @param {number} props.score - between 0 and 1
- * @param {number} [props.lastAskDate]
- *
- * @return {number} the next date/time at which the question should be asked
+ * @param {DateTimeMillis} [props.lastAskDate]
+ * @return {DateTimeMillis} the next date/time, in milliseconds at which the question should be asked
  */
 export const getNextAskDate = ({score, now, lastAskDate}) => {
-  // We put the score in a range 0.2 to 2 to use as a multiplier
-  const multiplier = Math.max(score, 0.1) * 2;
-
-
   const lastInterval = lastAskDate
     ? now - lastAskDate
-    : minsToMillis(10); // For new questions, 10 minutes
+    : time.minsToMillis(10); // For new questions, 10 minutes
 
-  // Never less than 2 minutes
-  const nextInterval = Math.max(1000 * 60 * 2, lastInterval * multiplier);
+  // We convert the score (0 to 1) to a multiplier (0.1 to 2)
+  const multiplier = Math.max(score, 0.05) * 2;
+
+  // And multiply the last interval by it. But never less than 1 minute
+  const nextInterval = Math.max(time.minsToMillis(1), lastInterval * multiplier);
 
   return Math.round(now + nextInterval);
 };
@@ -81,22 +108,23 @@ const updateAnswerHistory = score => {
     now,
   });
 
-  const dateProps = {
+  const newProps = {
     lastAskDate: now,
+    lastScore: score,
     nextAskDate,
   };
 
-  // Update the item in the array of features
+  // Update the item in the array of features in memory
   allQuestionFeatures = allQuestionFeatures.map(feature => {
     if (feature.id !== currentQuestion.id) return feature;
 
-    return utils.updateFeatureProps(feature, dateProps);
+    return utils.updateFeatureProps(feature, newProps);
   });
 
-  // And the history data to save
+  // Update the history data to save to the database
   answerHistoryMap.set(currentQuestion.id, Object.assign({},
     {id: currentQuestion.id},
-    dateProps
+    newProps
   ));
 
   // For now, while testing, I'll keep saving to LS.
@@ -105,7 +133,7 @@ const updateAnswerHistory = score => {
 
   // This setup kinda-sorta handles temporarily going offline.
   // If you answer two questions in a tunnel with no reception, then a third when back online, everything is saved
-  cab.update(progressId, {answerHistory: utils.mapToArray(answerHistoryMap)})
+  cab.update(userId, {answerHistory: utils.mapToArray(answerHistoryMap)})
     .then(response => {
       if (response.error) {
         console.error('Could not save progress:', response.error);
@@ -115,9 +143,59 @@ const updateAnswerHistory = score => {
   return nextAskDate;
 };
 
+/**
+ * @return {QuestionFeature}
+ */
 export const getCurrentQuestion = () => currentQuestion;
 
-export const getStats = () => {
+/**
+ * Prints stats to the console about questions that have been answered so far
+ *
+ * @param {boolean} [showAlert]
+ */
+export const generateAndPrintStats = showAlert => {
+  const SCORE_BRACKETS = {
+    WRONG: {name: 'Wrong', count: 0},
+    CLOSE: {name: 'Close', count: 0},
+    RIGHT: {name: 'Right', count: 0},
+  };
+
+  let total = 0;
+
+  allQuestionFeatures.forEach(feature => {
+    const {lastScore} = feature.properties;
+
+    // Questions that haven't been answered are ignored
+    if (typeof lastScore === 'undefined') return;
+
+    const scoreBracket = lastScore === 0
+      ? SCORE_BRACKETS.WRONG
+      : lastScore < 0.8
+        ? SCORE_BRACKETS.CLOSE
+        : SCORE_BRACKETS.RIGHT;
+
+    total++;
+    scoreBracket.count++;
+  });
+
+  if (!total) return;
+
+  const finalMessage = [];
+
+  Object.values(SCORE_BRACKETS).forEach(scoreBracket => {
+    const percent = Math.round(scoreBracket.count / total * 100);
+
+    const message = `${scoreBracket.name}: ${scoreBracket.count} (${percent}%)`;
+    console.log(message);
+    finalMessage.push(message);
+  });
+
+  if (showAlert) window.alert(finalMessage.join('\n'));
+};
+
+window.printStats = () => generateAndPrintStats();
+
+export const getPageStats = () => {
   let today = 0;
   let unseen = 0;
   let future = 0;
@@ -140,7 +218,7 @@ export const getStats = () => {
  * Returns the next question due to be reviewed, or if there are none, a not-seen-yet question
  * The list could be slightly different each time, so we loop through every time we want a new question
  *
- * @return {Feature} - the next appropriate question
+ * @return {QuestionFeature} - the next appropriate question
  */
 export const getNextQuestion = () => {
   // TODO (davidg): unit tests..
@@ -197,12 +275,12 @@ export const answerQuestion = ({clickedFeature, clickCoords} = {}) => {
  * Doesn't return. Features can be accessed with getNextQuestion()
  *
  * @param {object} props
- * @param {FeatureCollection} props.questionFeatureCollection
- * @param {Array<AnswerHistoryItem>} props.answerHistory
  * @param {string} props.id
+ * @param {{features: Array<QuestionFeature>}} props.questionFeatureCollection
+ * @param {Array<AnswerHistoryItem>} props.answerHistory
  */
-export const init = ({questionFeatureCollection, answerHistory, id}) => {
-  progressId = id;
+export const init = ({id, questionFeatureCollection, answerHistory}) => {
+  userId = id;
 
   // For now, check to see if there was any history stored in LS. This can be removed eventually so I'll no
   // longer store progress in LS.
@@ -212,7 +290,7 @@ export const init = ({questionFeatureCollection, answerHistory, id}) => {
 
     if (localAnswerHistory && localAnswerHistory.length) {
       // Take it out of LS And save it to the server
-      cab.update(progressId, {answerHistory: utils.mapToArray(answerHistoryMap)})
+      cab.update(userId, {answerHistory: utils.mapToArray(answerHistoryMap)})
         .then(response => {
           if (response.error) {
             console.error('Could not save progress:', response.error);
@@ -223,13 +301,13 @@ export const init = ({questionFeatureCollection, answerHistory, id}) => {
     answerHistoryMap = utils.arrayToMap(answerHistory);
   }
 
-
   allQuestionFeatures = questionFeatureCollection.features.map(feature => {
     const matchingHistoryItem = answerHistoryMap.get(feature.id) || {};
 
     return utils.updateFeatureProps(feature, {
-      nextAskDate: matchingHistoryItem.nextAskDate, // maybe undefined
-      lastAskDate: matchingHistoryItem.lastAskDate, // maybe undefined
+      nextAskDate: matchingHistoryItem.nextAskDate,
+      lastAskDate: matchingHistoryItem.lastAskDate,
+      lastScore: matchingHistoryItem.lastScore,
     });
   });
 };

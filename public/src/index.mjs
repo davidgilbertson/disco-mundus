@@ -1,8 +1,8 @@
 import * as dom from './dom.mjs';
-import * as geoUtils from './geoUtils.mjs';
+import * as geo from './utils/geo.mjs';
 import * as mapbox from './mapbox.mjs';
 import * as questions from './questions.mjs';
-import * as utils from './utils.mjs';
+import * as utils from './utils/utils.mjs';
 import cab from './cab.mjs';
 
 let isAwaitingAnswer = false;
@@ -31,7 +31,7 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
 
   const {score, nextAskDate} = questions.answerQuestion({clickCoords, clickedFeature});
 
-  let questionText = '';
+  let questionText;
   if (score === 1) {
     questionText = `Correct!`;
     mapbox.markRight(clickedFeature.id);
@@ -57,7 +57,7 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
     const rightAnswer = questions.getCurrentQuestion();
     mapbox.markRight(rightAnswer.id);
     mapbox.addPopup({
-      lngLat: geoUtils.getTopPoint(rightAnswer),
+      lngLat: geo.getTopPoint(rightAnswer),
       text: rightAnswer.properties.name
     });
   }
@@ -72,7 +72,7 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
 
   dom.setQuestionNameInnerHTML(questionText);
 
-  dom.setStatsText(questions.getStats());
+  dom.setStatsText(questions.getPageStats());
 };
 
 dom.onClickNoIdeaButton(() => {
@@ -164,12 +164,12 @@ const getOrCreateHistory = async () => {
     id: historyData.id,
   }));
 
-  dom.setStatsText(questions.getStats());
+  dom.setStatsText(questions.getPageStats());
   askNextQuestion();
 
   // We want to refresh the stats if the user comes back after a while
   // Particularly on the mobile as an 'installed' app where it doesn't refresh
   window.addEventListener('focus', () => {
-    dom.setStatsText(questions.getStats());
+    dom.setStatsText(questions.getPageStats());
   });
 })();
