@@ -4,14 +4,6 @@ import {getIntervalAsWords} from './utils/utils.mjs';
 import * as time from './utils/time.mjs';
 import distance from './utils/distance.mjs';
 
-const test = (name, func) => {
-  try {
-    func();
-  } catch (err) {
-    console.error(name, err);
-  }
-};
-
 const now = 1000;
 global.Date.now = () => now;
 global.window = {};
@@ -26,9 +18,10 @@ test('Should convert intervals to human words', () => {
     {millis: 1000 * 60 * 60 * 23, result: '1 day'},
     {millis: 1000 * 60 * 60 * 24 * 2, result: '2 days'},
     {millis: 1000 * 60 * 60 * 24 * 8, result: 'a week'},
-    {millis: 1000 * 60 * 60 * 24 * 14, result: '2 weeks'},
+    {millis: 1000 * 60 * 60 * 24 * 15, result: 'a week and a bit'},
+    {millis: 1000 * 60 * 60 * 24 * 21, result: '3 weeks'},
     {millis: 1000 * 60 * 60 * 24 * 31 * 3, result: '3 months'},
-    {millis: 1000 * 60 * 60 * 24 * 31 * 12, result: '1 year'},
+    {millis: 1000 * 60 * 60 * 24 * 31 * 12, result: 'a year'},
     {millis: 1000 * 60 * 60 * 24 * 365 * 1000, result: '1000 years'},
   ].forEach(test => {
     assert.strictEqual(getIntervalAsWords(test.millis), test.result);
@@ -42,8 +35,8 @@ test('Should handle a new question answered right', () => {
     score: 1,
   });
 
-  // Should be now + 10 minutes
-  assert.strictEqual(nextAskDate, now + 10 * 60 * 1000);
+  // Should be now + 20 minutes
+  assert.strictEqual(nextAskDate, now + 20 * 60 * 1000);
 });
 
 test('Should handle a new question answered wrong', () => {
@@ -85,8 +78,8 @@ test('Should handle a repeat question answered wrong', () => {
     lastAskDate: now - time.daysToMillis(2),
   });
 
-  // Should be now + 0.4 days
-  assert.strictEqual(nextAskDate, now + time.daysToMillis(0.4));
+  // Should be now + 0.2 days
+  assert.strictEqual(nextAskDate, now + time.daysToMillis(0.2));
 });
 
 test('distance() should be close enough', () => {

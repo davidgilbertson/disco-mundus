@@ -6,12 +6,15 @@
   "type": "module",
   "scripts": {
     "start": "firebase serve -p 3000",
+    "test": "node ./public/runTests.mjs",
     "deploy": "firebase deploy"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {},
+  "devDependencies": {
+    "glob": "latest"
+  },
   "dependencies": {
     "firebase-tools": "^7.11.0"
   }
