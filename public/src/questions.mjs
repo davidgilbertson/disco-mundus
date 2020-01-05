@@ -2,7 +2,8 @@ import distance from './utils/distance.mjs';
 import * as time from './utils/time.mjs';
 import * as storage from './utils/storage.mjs';
 import * as utils from './utils/utils.mjs';
-import {STORAGE_KEYS} from './utils/constants.mjs';
+import * as geo from './utils/geo.mjs';
+import {STORAGE_KEYS, DMSR} from './utils/constants.mjs';
 import cab from './cab.mjs';
 
 /**
@@ -24,6 +25,8 @@ import cab from './cab.mjs';
  * @typedef QuestionFeature
  * @property {number} id
  * @property {object} properties
+ * @property {string} properties.name
+ * @property {Coords} properties.center
  * @property {DateTimeMillis} [properties.nextAskDate] - date/time in milliseconds.
  * @property {DateTimeMillis} [properties.lastAskDate] - date/time in milliseconds.
  * @property {number} [properties.lastScore] - the score, between 0 and 1
@@ -52,51 +55,53 @@ let answerHistoryMap;
  * Returns the next date/time at which a question should be asked, based
  * on the last time it was asked and the score it was given this time.
  *
- * Note that SM-2 uses a multiplier between 1.3 and 2.5 ('easiness factor') that is unique to each question
- * and adjusted with each answer. This is based on the idea that
- * some things are inherently more difficult to commit to memory.
- * It also resets a question back to the start with a wrong answer.
- *
- * I'm just using a multiplier of between 0.1 and 2, based on the answer score.
- * E.g. if it's been 10 days since you last answered the question (meaning you got it right several times in a row), then if:
- *  - you get it wrong (score 0): it will ask you in 1 day
- *  - you get it close (score 0.5): it will ask you in another 10
- *  - you get it right (score 1): it will ask you again in 20 days
+ * Details in the README.md
  *
  * @param {object} props
- * @param {number} props.now
+ * @param {DateTimeMillis} props.now
  * @param {number} props.score - between 0 and 1
  * @param {DateTimeMillis} [props.lastAskDate]
  * @return {DateTimeMillis} the next date/time, in milliseconds at which the question should be asked
  */
 export const getNextAskDate = ({score, now, lastAskDate}) => {
+  if (score < 0 || score > 1 || typeof score === 'undefined') throw Error('Score must be between 0 and 1');
+
   const lastInterval = lastAskDate
     ? now - lastAskDate
-    : time.minsToMillis(10); // For new questions, 10 minutes
+    : time.minsToMillis(DMSR.FIRST_TIME_MINS); // For new questions
 
-  // We convert the score (0 to 1) to a multiplier (0.1 to 2)
-  const multiplier = Math.max(score, 0.05) * 2;
+  // We stretch the score (0 to 1) to fit the multiplier bounds ...
+  const multiplier = score * (DMSR.MULTIPLIERS.MAX - DMSR.MULTIPLIERS.MIN) + DMSR.MULTIPLIERS.MIN;
 
-  // And multiply the last interval by it. But never less than 1 minute
-  const nextInterval = Math.max(time.minsToMillis(1), lastInterval * multiplier);
+  // ... and multiply the last interval by it (never less than 1 minute)
+  const nextInterval = Math.max(time.minsToMillis(DMSR.MIN_MINS), lastInterval * multiplier);
 
   return Math.round(now + nextInterval);
 };
 
 /**
- * Converts the distance between two points to a score
- * @param {Array<number>} coords1 - [lng, lat]
- * @param {Array<number>} coords2 - [lng, lat]
- * @return {number} score - a score between 0 and 1;
+ * Converts the relative location of two polygons to a score
+ *
+ * @param {object} props
+ * @param {Coords} props.clickCoords
+ * @param {QuestionFeature} correctQuestionFeature
+ * @param {QuestionFeature} clickedQuestionFeature
+ * @return {number} a score between 0 and 1;
  */
-export const distanceToScore = (coords1, coords2) => {
-  // You get some points for being close
-  const CLOSE = 10000; // 10 KMs
-  const answerDistanceKms = distance(coords1, coords2);
+export const distanceToScore = ({
+  clickCoords,
+  correctQuestionFeature,
+  clickedQuestionFeature,
+}) => {
+  // Note, it would be nice to test if two features share a point, but features can be thousands
+  // of points, so millions of combinations.
+  if (geo.areNeighbors(correctQuestionFeature, clickedQuestionFeature)) {
+    return DMSR.SCORE_FOR_NEIGHBOR;
+  }
 
-  // 1 when distance is 0
-  // 0 when distance is 10km or more
-  return (CLOSE - Math.min(answerDistanceKms, CLOSE)) / CLOSE;
+  const answerDistanceKms = distance(correctQuestionFeature.properties.center, clickCoords);
+
+  return (DMSR.CLOSE_M - Math.min(answerDistanceKms, DMSR.CLOSE_M)) / DMSR.CLOSE_M;
 };
 
 const updateAnswerHistory = score => {
@@ -247,8 +252,8 @@ export const getNextQuestion = () => {
 
 /**
  * @param {object} [props]
- * @param props.clickedFeature
- * @param props.clickCoords
+ * @param {QuestionFeature} props.clickedFeature
+ * @param {Coords} props.clickCoords
  * @return {{score: number, nextAskDate: number}}
  */
 export const answerQuestion = ({clickedFeature, clickCoords} = {}) => {
@@ -262,7 +267,11 @@ export const answerQuestion = ({clickedFeature, clickCoords} = {}) => {
     score = 1;
   } else {
     // Base the score on how close the guess was
-    score = distanceToScore(clickCoords, currentQuestion.properties.center);
+    score = distanceToScore({
+      clickCoords,
+      correctQuestionFeature: currentQuestion,
+      clickedQuestionFeature: clickedFeature,
+    });
   }
 
   const nextAskDate = updateAnswerHistory(score);

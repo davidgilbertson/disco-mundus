@@ -1,7 +1,10 @@
 /**
- *
+ * @typedef {Array<number>} Coords - [lng, lat]
+ */
+
+/**
  * @param {QuestionFeature} polygon
- * @return {Array<number>} coordinates
+ * @return {Coords|undefined} coordinates
  */
 export const getTopPoint = polygon => {
   if (!polygon || polygon.geometry.coordinates[0][0].length !== 2) return undefined;
@@ -19,4 +22,20 @@ export const getTopPoint = polygon => {
   });
 
   return topPoint;
+};
+
+/**
+ * Checks if two polygons share a point, i.e. are therefore neighbors.
+ *
+ * @param {QuestionFeature} polygon1
+ * @param {QuestionFeature} polygon2
+ * @returns {boolean}
+ */
+export const areNeighbors = (polygon1, polygon2) => {
+  const coords1Arr = polygon1.geometry.coordinates.flat().map(item => `${item[0]}-${item[1]}`);
+  const coords2Arr = polygon2.geometry.coordinates.flat().map(item => `${item[0]}-${item[1]}`);
+
+  const coords2Set = new Set(coords2Arr);
+
+  return coords1Arr.some(coord1AsString => coords2Set.has(coord1AsString));
 };

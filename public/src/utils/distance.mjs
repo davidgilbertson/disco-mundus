@@ -1,7 +1,7 @@
 /**
  *
- * @param {Array<number>} point1 - [lng, lat] format
- * @param {Array<number>} point2 - [lng, lat] format
+ * @param {Coords} point1
+ * @param {Coords} point2
  * @return {number} - the distance, in meters, roughly.
  */
 export default function (point1, point2) {
