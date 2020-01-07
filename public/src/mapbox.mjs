@@ -211,6 +211,26 @@ export const init = ({onFeatureClick}) => new Promise(resolve => {
   });
 
   map.on('load', () => {
+    map.getStyle().layers.filter(layer => layer.type === 'symbol').forEach(layer => {
+      // Show the place labels only when zoomed in a bit more
+      if (layer.id.startsWith('place-')) {
+        map.setLayerZoomRange(
+          layer.id,
+          layer.minzoom + 2,
+          layer.maxzoom,
+        );
+      }
+
+      // Make the road labels visible sooner
+      if (layer.id === 'road-label-xlarge') {
+        map.setLayerZoomRange(
+          layer.id,
+          layer.minzoom - 2,
+          layer.maxzoom,
+        );
+      }
+    });
+
     resolve();
   });
 });
