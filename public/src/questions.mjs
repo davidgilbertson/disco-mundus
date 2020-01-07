@@ -166,12 +166,16 @@ export const generateAndPrintStats = showAlert => {
   };
 
   let total = 0;
+  const now = Date.now();
 
   allQuestionFeatures.forEach(feature => {
-    const {lastScore} = feature.properties;
+    const {lastScore, lastAskDate} = feature.properties;
 
     // Questions that haven't been answered are ignored
     if (typeof lastScore === 'undefined') return;
+
+    // Only include the last few days of answers (at least for now, while I'm tweaking the algorithm)
+    if (now - lastAskDate > time.daysToMillis(2)) return;
 
     const scoreBracket = lastScore === 0
       ? SCORE_BRACKETS.WRONG
@@ -190,7 +194,7 @@ export const generateAndPrintStats = showAlert => {
   Object.values(SCORE_BRACKETS).forEach(scoreBracket => {
     const percent = Math.round(scoreBracket.count / total * 100);
 
-    const message = `${scoreBracket.name}: ${scoreBracket.count} (${percent}%)`;
+    const message = `${scoreBracket.name}: ${percent}% (${scoreBracket.count})`;
     console.log(message);
     finalMessage.push(message);
   });
