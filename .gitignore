@@ -1,5 +1,6 @@
 .idea
 .firebase
 node_modules
+private
 
 firebase-debug.log
