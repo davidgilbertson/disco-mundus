@@ -1,10 +1,9 @@
-import distance from './utils/distance.mjs';
-import * as time from './utils/time.mjs';
-import * as storage from './utils/storage.mjs';
-import * as utils from './utils/utils.mjs';
-import * as geo from './utils/geo.mjs';
-import {STORAGE_KEYS, DMSR} from './utils/constants.mjs';
-import cab from './cab.mjs';
+import * as dataUtils from './utils/dataUtils.mjs';
+import * as questionUtils from './utils/questionUtils.mjs';
+import * as storageUtils from './utils/storageUtils.mjs';
+import * as dateTimeUtils from './utils/dateTimeUtils.mjs';
+import cabService from './cabService.mjs';
+import {STORAGE_KEYS} from './constants.mjs';
 
 /**
  * @typedef AnswerHistoryItem
@@ -36,78 +35,19 @@ import cab from './cab.mjs';
 /** @type {string} */
 let userId;
 
-/**
- * @type {Array<QuestionFeature>}
- */
+/** @type {Array<QuestionFeature>} */
 let allQuestionFeatures;
 
-/**
- * @type {QuestionFeature}
- */
+/** @type {QuestionFeature} */
 let currentQuestion;
 
-/**
- * @type {Map<number, AnswerHistoryItem>}
- */
+/** @type {Map<number, AnswerHistoryItem>} */
 let answerHistoryMap;
-
-/**
- * Returns the next date/time at which a question should be asked, based
- * on the last time it was asked and the score it was given this time.
- *
- * Details in the README.md
- *
- * @param {object} props
- * @param {DateTimeMillis} props.now
- * @param {number} props.score - between 0 and 1
- * @param {DateTimeMillis} [props.lastAskDate]
- * @return {DateTimeMillis} the next date/time, in milliseconds at which the question should be asked
- */
-export const getNextAskDate = ({score, now, lastAskDate}) => {
-  if (score < 0 || score > 1 || typeof score === 'undefined') throw Error('Score must be between 0 and 1');
-
-  const lastInterval = lastAskDate
-    ? now - lastAskDate
-    : time.minsToMillis(DMSR.FIRST_TIME_MINS); // For new questions
-
-  // We stretch the score (0 to 1) to fit the multiplier bounds ...
-  const multiplier = score * (DMSR.MULTIPLIERS.MAX - DMSR.MULTIPLIERS.MIN) + DMSR.MULTIPLIERS.MIN;
-
-  // ... and multiply the last interval by it (never less than 1 minute)
-  const nextInterval = Math.max(time.minsToMillis(DMSR.MIN_MINS), lastInterval * multiplier);
-
-  return Math.round(now + nextInterval);
-};
-
-/**
- * Converts the relative location of two polygons to a score
- *
- * @param {object} props
- * @param {Coords} props.clickCoords
- * @param {QuestionFeature} correctQuestionFeature
- * @param {QuestionFeature} clickedQuestionFeature
- * @return {number} a score between 0 and 1;
- */
-export const distanceToScore = ({
-  clickCoords,
-  correctQuestionFeature,
-  clickedQuestionFeature,
-}) => {
-  // Note, it would be nice to test if two features share a point, but features can be thousands
-  // of points, so millions of combinations.
-  if (geo.areNeighbors(correctQuestionFeature, clickedQuestionFeature)) {
-    return DMSR.SCORE_FOR_NEIGHBOR;
-  }
-
-  const answerDistanceKms = distance(correctQuestionFeature.properties.center, clickCoords);
-
-  return (DMSR.CLOSE_M - Math.min(answerDistanceKms, DMSR.CLOSE_M)) / DMSR.CLOSE_M;
-};
 
 const updateAnswerHistory = score => {
   const now = Date.now();
 
-  const nextAskDate = getNextAskDate({
+  const nextAskDate = questionUtils.getNextAskDate({
     lastAskDate: currentQuestion.properties.lastAskDate,
     score,
     now,
@@ -123,7 +63,7 @@ const updateAnswerHistory = score => {
   allQuestionFeatures = allQuestionFeatures.map(feature => {
     if (feature.id !== currentQuestion.id) return feature;
 
-    return utils.updateFeatureProps(feature, newProps);
+    return dataUtils.updateFeatureProps(feature, newProps);
   });
 
   // Update the history data to save to the database
@@ -134,11 +74,11 @@ const updateAnswerHistory = score => {
 
   // For now, while testing, I'll keep saving to LS.
   // But if anything comes back from the server on page load, LS is ignored.
-  storage.set(STORAGE_KEYS.ANSWER_HISTORY, utils.mapToArray(answerHistoryMap));
+  storageUtils.set(STORAGE_KEYS.ANSWER_HISTORY, dataUtils.mapToArray(answerHistoryMap));
 
   // This setup kinda-sorta handles temporarily going offline.
   // If you answer two questions in a tunnel with no reception, then a third when back online, everything is saved
-  cab.update(userId, {answerHistory: utils.mapToArray(answerHistoryMap)})
+  cabService.update(userId, {answerHistory: dataUtils.mapToArray(answerHistoryMap)})
     .then(response => {
       if (response.error) {
         console.error('Could not save progress:', response.error);
@@ -175,7 +115,7 @@ export const generateAndPrintStats = showAlert => {
     if (typeof lastScore === 'undefined') return;
 
     // Only include the last few days of answers (at least for now, while I'm tweaking the algorithm)
-    if (now - lastAskDate > time.daysToMillis(2)) return;
+    if (now - lastAskDate > dateTimeUtils.daysToMillis(2)) return;
 
     const scoreBracket = lastScore === 0
       ? SCORE_BRACKETS.WRONG
@@ -271,7 +211,7 @@ export const answerQuestion = ({clickedFeature, clickCoords} = {}) => {
     score = 1;
   } else {
     // Base the score on how close the guess was
-    score = distanceToScore({
+    score = questionUtils.calculateAnswerScore({
       clickCoords,
       correctQuestionFeature: currentQuestion,
       clickedQuestionFeature: clickedFeature,
@@ -298,12 +238,12 @@ export const init = ({id, questionFeatureCollection, answerHistory}) => {
   // For now, check to see if there was any history stored in LS. This can be removed eventually so I'll no
   // longer store progress in LS.
   if (!answerHistory.length) {
-    const localAnswerHistory = storage.get(STORAGE_KEYS.ANSWER_HISTORY);
-    answerHistoryMap = utils.arrayToMap(localAnswerHistory || []);
+    const localAnswerHistory = storageUtils.get(STORAGE_KEYS.ANSWER_HISTORY);
+    answerHistoryMap = dataUtils.arrayToMap(localAnswerHistory || []);
 
     if (localAnswerHistory && localAnswerHistory.length) {
       // Take it out of LS And save it to the server
-      cab.update(userId, {answerHistory: utils.mapToArray(answerHistoryMap)})
+      cabService.update(userId, {answerHistory: dataUtils.mapToArray(answerHistoryMap)})
         .then(response => {
           if (response.error) {
             console.error('Could not save progress:', response.error);
@@ -311,13 +251,13 @@ export const init = ({id, questionFeatureCollection, answerHistory}) => {
         });
     }
   } else {
-    answerHistoryMap = utils.arrayToMap(answerHistory);
+    answerHistoryMap = dataUtils.arrayToMap(answerHistory);
   }
 
   allQuestionFeatures = questionFeatureCollection.features.map(feature => {
     const matchingHistoryItem = answerHistoryMap.get(feature.id) || {};
 
-    return utils.updateFeatureProps(feature, {
+    return dataUtils.updateFeatureProps(feature, {
       nextAskDate: matchingHistoryItem.nextAskDate,
       lastAskDate: matchingHistoryItem.lastAskDate,
       lastScore: matchingHistoryItem.lastScore,

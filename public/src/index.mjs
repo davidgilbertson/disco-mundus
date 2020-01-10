@@ -1,18 +1,18 @@
 import * as dom from './dom.mjs';
-import * as geo from './utils/geo.mjs';
-import * as mapbox from './mapbox.mjs';
-import * as questions from './questions.mjs';
-import * as utils from './utils/utils.mjs';
-import cab from './cab.mjs';
+import * as geoUtils from './utils/geoUtils.mjs';
+import * as mapboxManager from './mapboxManager.mjs';
+import * as questionManager from './questionManager.mjs';
+import * as questionUtils from './utils/questionUtils.mjs';
+import cabService from './cabService.mjs';
 
 let isAwaitingAnswer = false;
 
 const askNextQuestion = () => {
   isAwaitingAnswer = true;
-  const nextQuestion = questions.getNextQuestion();
+  const nextQuestion = questionManager.getNextQuestion();
 
-  mapbox.clearStatuses();
-  mapbox.clearPopups();
+  mapboxManager.clearStatuses();
+  mapboxManager.clearPopups();
 
   dom.setQuestionNameInnerHTML(`Where is ${nextQuestion.properties.name}?`);
 
@@ -29,15 +29,15 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
   dom.hideNoIdeaButton();
   dom.showNextButton();
 
-  const {score, nextAskDate} = questions.answerQuestion({clickCoords, clickedFeature});
+  const {score, nextAskDate} = questionManager.answerQuestion({clickCoords, clickedFeature});
 
   let questionText;
   if (score === 1) {
     questionText = `Correct!`;
-    mapbox.markRight(clickedFeature.id);
+    mapboxManager.markRight(clickedFeature.id);
   } else {
     if (clickedFeature) {
-      mapbox.markWrong(clickedFeature.id);
+      mapboxManager.markWrong(clickedFeature.id);
     }
 
     if (score === 0) {
@@ -54,15 +54,15 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
       questionText = 'Wrong, but very close!';
     }
 
-    const rightAnswer = questions.getCurrentQuestion();
-    mapbox.markRight(rightAnswer.id);
-    mapbox.addPopup({
-      lngLat: geo.getTopPoint(rightAnswer),
+    const rightAnswer = questionManager.getCurrentQuestion();
+    mapboxManager.markRight(rightAnswer.id);
+    mapboxManager.addPopup({
+      lngLat: geoUtils.getTopPoint(rightAnswer),
       text: rightAnswer.properties.name
     });
   }
 
-  const nextDuration = utils.getIntervalAsWords(nextAskDate - Date.now());
+  const nextDuration = questionUtils.getIntervalAsWords(nextAskDate - Date.now());
   questionText += `
     <br>
     <small>
@@ -72,11 +72,11 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
 
   dom.setQuestionNameInnerHTML(questionText);
 
-  dom.setStatsText(questions.getPageStats());
+  dom.setStatsText(questionManager.getPageStats());
 };
 
 dom.onClickNoIdeaButton(() => {
-  mapbox.panTo(questions.getCurrentQuestion());
+  mapboxManager.panTo(questionManager.getCurrentQuestion());
   handleResponse();
 });
 
@@ -111,7 +111,7 @@ const getOrCreateHistory = async () => {
   }
 
   if (id) {
-    const response = await cab.read(id);
+    const response = await cabService.read(id);
 
     if (!response.error) {
       return {
@@ -124,7 +124,7 @@ const getOrCreateHistory = async () => {
   }
 
   // There was no ID, or a bad ID, so create a new session
-  const response = await cab.create({answerHistory: []});
+  const response = await cabService.create({answerHistory: []});
 
   if (!response.error) {
     // We've got a new ID, put it in the URL
@@ -153,23 +153,34 @@ const getOrCreateHistory = async () => {
   const [questionFeatureCollection, historyData] = await Promise.all([
     fetch('data/sydneySuburbs.json').then(response => response.json()),
     getOrCreateHistory(),
-    mapbox.init({onFeatureClick: handleResponse}),
+    mapboxManager.init({onFeatureClick: handleResponse}),
   ]);
 
   // When all three are ready, render the data to the map and start asking questions
-  mapbox.addSuburbsLayer(questionFeatureCollection);
-  questions.init(({
+  mapboxManager.addSuburbsLayer(questionFeatureCollection);
+
+  // Clicking on my house shows stats
+  mapboxManager.onClick(e => {
+    const myHouseBounds = new mapboxgl.LngLatBounds([
+      {lng: 151.07749659127188, lat: -33.82599275017796},
+      {lng: 151.0783350111576, lat: -33.825089019351836}
+    ]);
+
+    if (myHouseBounds.contains(e.lngLat)) questionManager.generateAndPrintStats(true);
+  });
+
+  questionManager.init(({
     questionFeatureCollection,
     answerHistory: historyData.answerHistory,
     id: historyData.id,
   }));
 
-  dom.setStatsText(questions.getPageStats());
+  dom.setStatsText(questionManager.getPageStats());
   askNextQuestion();
 
   // We want to refresh the stats if the user comes back after a while
   // Particularly on the mobile as an 'installed' app where it doesn't refresh
   window.addEventListener('focus', () => {
-    dom.setStatsText(questions.getPageStats());
+    dom.setStatsText(questionManager.getPageStats());
   });
 })();
