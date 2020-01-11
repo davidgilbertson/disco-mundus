@@ -22,18 +22,21 @@ const askNextQuestion = () => {
 };
 
 // Update the UI based on the response
-const handleResponse = ({clickedFeature, clickCoords} = {}) => {
+const handleResponse = ({ clickedFeature, clickCoords } = {}) => {
   if (!isAwaitingAnswer) return;
 
   isAwaitingAnswer = false;
   dom.hideNoIdeaButton();
   dom.showNextButton();
 
-  const {score, nextAskDate} = questionManager.answerQuestion({clickCoords, clickedFeature});
+  const { score, nextAskDate } = questionManager.answerQuestion({
+    clickCoords,
+    clickedFeature,
+  });
 
   let questionText;
   if (score === 1) {
-    questionText = `Correct!`;
+    questionText = 'Correct!';
     mapboxManager.markRight(clickedFeature.id);
   } else {
     if (clickedFeature) {
@@ -58,11 +61,13 @@ const handleResponse = ({clickedFeature, clickCoords} = {}) => {
     mapboxManager.markRight(rightAnswer.id);
     mapboxManager.addPopup({
       lngLat: geoUtils.getTopPoint(rightAnswer),
-      text: rightAnswer.properties.name
+      text: rightAnswer.properties.name,
     });
   }
 
-  const nextDuration = questionUtils.getIntervalAsWords(nextAskDate - Date.now());
+  const nextDuration = questionUtils.getIntervalAsWords(
+    nextAskDate - Date.now()
+  );
   questionText += `
     <br>
     <small>
@@ -116,7 +121,7 @@ const getOrCreateHistory = async () => {
     if (!response.error) {
       return {
         answerHistory: response.data.answerHistory,
-        id: id,
+        id,
       };
     }
 
@@ -124,7 +129,7 @@ const getOrCreateHistory = async () => {
   }
 
   // There was no ID, or a bad ID, so create a new session
-  const response = await cabService.create({answerHistory: []});
+  const response = await cabService.create({ answerHistory: [] });
 
   if (!response.error) {
     // We've got a new ID, put it in the URL
@@ -153,27 +158,30 @@ const getOrCreateHistory = async () => {
   const [questionFeatureCollection, historyData] = await Promise.all([
     fetch('data/sydneySuburbs.json').then(response => response.json()),
     getOrCreateHistory(),
-    mapboxManager.init({onFeatureClick: handleResponse}),
+    mapboxManager.init({ onFeatureClick: handleResponse }),
   ]);
 
-  // When all three are ready, render the data to the map and start asking questions
+  // When all three are ready, render the data to
+  // the map and start asking questions
   mapboxManager.addSuburbsLayer(questionFeatureCollection);
 
   // Clicking on my house shows stats
   mapboxManager.onClick(e => {
     const myHouseBounds = new mapboxgl.LngLatBounds([
-      {lng: 151.07749659127188, lat: -33.82599275017796},
-      {lng: 151.0783350111576, lat: -33.825089019351836}
+      { lng: 151.07749659127188, lat: -33.82599275017796 },
+      { lng: 151.0783350111576, lat: -33.825089019351836 },
     ]);
 
-    if (myHouseBounds.contains(e.lngLat)) questionManager.generateAndPrintStats(true);
+    if (myHouseBounds.contains(e.lngLat)) {
+      questionManager.generateAndPrintStats(true);
+    }
   });
 
-  questionManager.init(({
+  questionManager.init({
     questionFeatureCollection,
     answerHistory: historyData.answerHistory,
     id: historyData.id,
-  }));
+  });
 
   dom.setStatsText(questionManager.getPageStats());
   askNextQuestion();

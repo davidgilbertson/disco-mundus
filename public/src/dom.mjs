@@ -36,7 +36,7 @@ export const onClickNextButton = func => {
   nextButton.addEventListener('click', func);
 };
 
-export const setStatsText = ({today, unseen, future}) => {
+export const setStatsText = ({ today, unseen, future }) => {
   statsEl.innerHTML = [
     `Review now: ${today}`,
     '<span class="stats-spacer">|</span>',
@@ -50,8 +50,10 @@ export const onClickNoIdeaButton = func => {
   noIdeaButton.addEventListener('click', func);
 };
 
-// Somewhat dodgy logic to prevent the 'focus' ring on the buttons. This is a proxy for 'is a keyboard available',
-// since these users are less unlikely to want the enter/space shortcut of going to the next question.
+// Somewhat dodgy logic to prevent the 'focus' ring on the buttons.
+// This is a proxy for 'is a keyboard available',
+// since these users are less unlikely to
+// want the enter/space shortcut of going to the next question.
 window.addEventListener('touchstart', function handleTouch() {
   isTouch = true;
   window.removeEventListener('touchstart', handleTouch);

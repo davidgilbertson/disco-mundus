@@ -8,23 +8,25 @@ global.window = {};
 
 test('Should convert intervals to human words', () => {
   [
-    {millis: 0, result: '1 minute'},
-    {millis: 1000 * 60, result: '1 minute'},
-    {millis: 1000 * 60 * 3, result: '3 minutes'},
-    {millis: 1000 * 60 * 59, result: '1 hour'},
-    {millis: 1000 * 60 * 60 * 7, result: '7 hours'},
-    {millis: 1000 * 60 * 60 * 23, result: '1 day'},
-    {millis: 1000 * 60 * 60 * 24 * 2, result: '2 days'},
-    {millis: 1000 * 60 * 60 * 24 * 8, result: 'a week'},
-    {millis: 1000 * 60 * 60 * 24 * 15, result: 'a week and a bit'},
-    {millis: 1000 * 60 * 60 * 24 * 21, result: '3 weeks'},
-    {millis: 1000 * 60 * 60 * 24 * 31 * 3, result: '3 months'},
-    {millis: 1000 * 60 * 60 * 24 * 31 * 12, result: 'a year'},
-    {millis: 1000 * 60 * 60 * 24 * 365 * 1000, result: '1000 years'},
-  ].forEach(test => {
-    assert.strictEqual(questionUtils.getIntervalAsWords(test.millis), test.result);
+    { millis: 0, result: '1 minute' },
+    { millis: 1000 * 60, result: '1 minute' },
+    { millis: 1000 * 60 * 3, result: '3 minutes' },
+    { millis: 1000 * 60 * 59, result: '1 hour' },
+    { millis: 1000 * 60 * 60 * 7, result: '7 hours' },
+    { millis: 1000 * 60 * 60 * 23, result: '1 day' },
+    { millis: 1000 * 60 * 60 * 24 * 2, result: '2 days' },
+    { millis: 1000 * 60 * 60 * 24 * 8, result: 'a week' },
+    { millis: 1000 * 60 * 60 * 24 * 15, result: 'a week and a bit' },
+    { millis: 1000 * 60 * 60 * 24 * 21, result: '3 weeks' },
+    { millis: 1000 * 60 * 60 * 24 * 31 * 3, result: '3 months' },
+    { millis: 1000 * 60 * 60 * 24 * 31 * 12, result: 'a year' },
+    { millis: 1000 * 60 * 60 * 24 * 365 * 1000, result: '1000 years' },
+  ].forEach(testData => {
+    assert.strictEqual(
+      questionUtils.getIntervalAsWords(testData.millis),
+      testData.result
+    );
   });
-
 });
 
 test('Should handle a new question answered right', () => {

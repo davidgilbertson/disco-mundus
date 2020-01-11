@@ -1,11 +1,12 @@
 // const API_URL = 'http://localhost:5001/velantrix/us-central1/api';
 const API_URL = 'https://us-central1-velantrix.cloudfunctions.net/api';
 
-const fetchJson = (url, opts = {}) => fetch(url, {
-  method: opts.method,
-  headers: {'Content-Type': 'application/json'},
-  body: opts.body && JSON.stringify(opts.body),
-}).then(res => res.json());
+const fetchJson = (url, opts = {}) =>
+  fetch(url, {
+    method: opts.method,
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body && JSON.stringify(opts.body),
+  }).then(res => res.json());
 
 /**
  * @typedef {{[error]: string, [id]: string}} CreateResponse
@@ -18,10 +19,11 @@ export default {
    * @param {object} body
    * @return {Promise<CreateResponse>}
    */
-  create: body => fetchJson(API_URL, {
-    method: 'POST',
-    body,
-  }),
+  create: body =>
+    fetchJson(API_URL, {
+      method: 'POST',
+      body,
+    }),
 
   /**
    * @param {string} id
@@ -34,8 +36,9 @@ export default {
    * @param {object} body
    * @return {Promise<UpdateResponse>}
    */
-  update: (id, body) => fetchJson(`${API_URL}/${id}`, {
-    method: 'PUT',
-    body,
-  }),
+  update: (id, body) =>
+    fetchJson(`${API_URL}/${id}`, {
+      method: 'PUT',
+      body,
+    }),
 };

@@ -7,10 +7,7 @@ export const mapToArray = map => Array.from(map.values());
  * @param {object} props
  * @return {QuestionFeature}
  */
-export const updateFeatureProps = (feature, props) => Object.assign({},
-  feature,
-  {
+export const updateFeatureProps = (feature, props) =>
+  Object.assign({}, feature, {
     properties: Object.assign({}, feature.properties, props),
-  }
-);
-
+  });

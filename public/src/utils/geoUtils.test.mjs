@@ -13,7 +13,7 @@ test('distanceBetween() should be close enough', () => {
     1185 // about 1 KM, seems right, right?
   );
 
-  const berowra =[151.13563025450014, -33.60389502541771];
+  const berowra = [151.13563025450014, -33.60389502541771];
   const cornulla = [151.15173920546326, -34.05850561581029];
   assert.equal(
     Math.round(geoUtils.distanceBetween(berowra, cornulla)),

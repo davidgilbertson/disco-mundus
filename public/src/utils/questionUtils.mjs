@@ -1,6 +1,6 @@
 import * as dateTimeUtils from './dateTimeUtils.mjs';
 import * as geoUtils from './geoUtils.mjs';
-import {DMSR} from '../constants.mjs';
+import { DMSR } from '../constants.mjs';
 
 /**
  * Returns the next date/time at which a question should be asked, based
@@ -12,20 +12,28 @@ import {DMSR} from '../constants.mjs';
  * @param {DateTimeMillis} props.now
  * @param {number} props.score - between 0 and 1
  * @param {DateTimeMillis} [props.lastAskDate]
- * @return {DateTimeMillis} the next date/time, in milliseconds at which the question should be asked
+ * @return {DateTimeMillis} the next date/time, in
+ *   milliseconds at which the question should be asked
  */
-export const getNextAskDate = ({score, now, lastAskDate}) => {
-  if (score < 0 || score > 1 || typeof score === 'undefined') throw Error('Score must be between 0 and 1');
+export const getNextAskDate = ({ score, now, lastAskDate }) => {
+  if (score < 0 || score > 1 || typeof score === 'undefined') {
+    throw Error('Score must be between 0 and 1');
+  }
 
   const lastInterval = lastAskDate
     ? now - lastAskDate
     : dateTimeUtils.minsToMillis(DMSR.FIRST_TIME_MINS); // For new questions
 
   // We stretch the score (0 to 1) to fit the multiplier bounds ...
-  const multiplier = score * (DMSR.MULTIPLIERS.MAX - DMSR.MULTIPLIERS.MIN) + DMSR.MULTIPLIERS.MIN;
+  const multiplier =
+    score * (DMSR.MULTIPLIERS.MAX - DMSR.MULTIPLIERS.MIN) +
+    DMSR.MULTIPLIERS.MIN;
 
   // ... and multiply the last interval by it (never less than 1 minute)
-  const nextInterval = Math.max(dateTimeUtils.minsToMillis(DMSR.MIN_MINS), lastInterval * multiplier);
+  const nextInterval = Math.max(
+    dateTimeUtils.minsToMillis(DMSR.MIN_MINS),
+    lastInterval * multiplier
+  );
 
   return Math.round(now + nextInterval);
 };
@@ -50,9 +58,14 @@ export const calculateAnswerScore = ({
     return DMSR.SCORE_FOR_NEIGHBOR;
   }
 
-  const answerDistanceKms = geoUtils.distanceBetween(correctQuestionFeature.properties.center, clickCoords);
+  const answerDistanceKms = geoUtils.distanceBetween(
+    correctQuestionFeature.properties.center,
+    clickCoords
+  );
 
-  return (DMSR.CLOSE_M - Math.min(answerDistanceKms, DMSR.CLOSE_M)) / DMSR.CLOSE_M;
+  return (
+    (DMSR.CLOSE_M - Math.min(answerDistanceKms, DMSR.CLOSE_M)) / DMSR.CLOSE_M
+  );
 };
 
 /**

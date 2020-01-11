@@ -3,7 +3,7 @@ import * as questionUtils from './utils/questionUtils.mjs';
 import * as storageUtils from './utils/storageUtils.mjs';
 import * as dateTimeUtils from './utils/dateTimeUtils.mjs';
 import cabService from './cabService.mjs';
-import {STORAGE_KEYS} from './constants.mjs';
+import { STORAGE_KEYS } from './constants.mjs';
 
 /**
  * @typedef AnswerHistoryItem
@@ -67,18 +67,23 @@ const updateAnswerHistory = score => {
   });
 
   // Update the history data to save to the database
-  answerHistoryMap.set(currentQuestion.id, Object.assign({},
-    {id: currentQuestion.id},
-    newProps
-  ));
+  answerHistoryMap.set(
+    currentQuestion.id,
+    Object.assign({}, { id: currentQuestion.id }, newProps)
+  );
 
   // For now, while testing, I'll keep saving to LS.
   // But if anything comes back from the server on page load, LS is ignored.
-  storageUtils.set(STORAGE_KEYS.ANSWER_HISTORY, dataUtils.mapToArray(answerHistoryMap));
+  storageUtils.set(
+    STORAGE_KEYS.ANSWER_HISTORY,
+    dataUtils.mapToArray(answerHistoryMap)
+  );
 
   // This setup kinda-sorta handles temporarily going offline.
-  // If you answer two questions in a tunnel with no reception, then a third when back online, everything is saved
-  cabService.update(userId, {answerHistory: dataUtils.mapToArray(answerHistoryMap)})
+  // If you answer two questions in a tunnel with no reception,
+  // then a third when back online, everything is saved
+  cabService
+    .update(userId, { answerHistory: dataUtils.mapToArray(answerHistoryMap) })
     .then(response => {
       if (response.error) {
         console.error('Could not save progress:', response.error);
@@ -100,28 +105,32 @@ export const getCurrentQuestion = () => currentQuestion;
  */
 export const generateAndPrintStats = showAlert => {
   const SCORE_BRACKETS = {
-    WRONG: {name: 'Wrong', count: 0},
-    CLOSE: {name: 'Close', count: 0},
-    RIGHT: {name: 'Right', count: 0},
+    WRONG: { name: 'Wrong', count: 0 },
+    CLOSE: { name: 'Close', count: 0 },
+    RIGHT: { name: 'Right', count: 0 },
   };
 
   let total = 0;
   const now = Date.now();
 
   allQuestionFeatures.forEach(feature => {
-    const {lastScore, lastAskDate} = feature.properties;
+    const { lastScore, lastAskDate } = feature.properties;
 
     // Questions that haven't been answered are ignored
     if (typeof lastScore === 'undefined') return;
 
-    // Only include the last few days of answers (at least for now, while I'm tweaking the algorithm)
+    // Only include the last few days of answers
+    // (at least for now, while I'm tweaking the algorithm)
     if (now - lastAskDate > dateTimeUtils.daysToMillis(2)) return;
 
-    const scoreBracket = lastScore === 0
-      ? SCORE_BRACKETS.WRONG
-      : lastScore < 0.8
-        ? SCORE_BRACKETS.CLOSE
-        : SCORE_BRACKETS.RIGHT;
+    let scoreBracket;
+    if (lastScore === 0) {
+      scoreBracket = SCORE_BRACKETS.WRONG;
+    } else if (lastScore < 0.8) {
+      scoreBracket = SCORE_BRACKETS.CLOSE;
+    } else {
+      scoreBracket = SCORE_BRACKETS.RIGHT;
+    }
 
     total++;
     scoreBracket.count++;
@@ -132,10 +141,10 @@ export const generateAndPrintStats = showAlert => {
   const finalMessage = [];
 
   Object.values(SCORE_BRACKETS).forEach(scoreBracket => {
-    const percent = Math.round(scoreBracket.count / total * 100);
+    const percent = Math.round(scoreBracket.count / (total * 100));
 
     const message = `${scoreBracket.name}: ${percent}% (${scoreBracket.count})`;
-    console.log(message);
+    console.info(message);
     finalMessage.push(message);
   });
 
@@ -156,16 +165,18 @@ export const getPageStats = () => {
     } else if (feature.properties.nextAskDate < now) {
       today++;
     } else {
-      future++
+      future++;
     }
   });
 
-  return {today, unseen, future};
+  return { today, unseen, future };
 };
 
 /**
- * Returns the next question due to be reviewed, or if there are none, a not-seen-yet question
- * The list could be slightly different each time, so we loop through every time we want a new question
+ * Returns the next question due to be reviewed,
+ * or if there are none, a not-seen-yet question
+ * The list could be slightly different each time,
+ * so we loop through every time we want a new question
  *
  * @return {QuestionFeature} - the next appropriate question
  */
@@ -180,12 +191,19 @@ export const getNextQuestion = () => {
       return;
     }
 
-    if (!nextReviewQuestion || question.properties.nextAskDate < nextReviewQuestion.properties.nextAskDate) {
+    if (
+      !nextReviewQuestion ||
+      question.properties.nextAskDate <
+        nextReviewQuestion.properties.nextAskDate
+    ) {
       nextReviewQuestion = question;
     }
   });
 
-  if (nextReviewQuestion && nextReviewQuestion.properties.nextAskDate < Date.now()) {
+  if (
+    nextReviewQuestion &&
+    nextReviewQuestion.properties.nextAskDate < Date.now()
+  ) {
     currentQuestion = nextReviewQuestion;
   } else {
     currentQuestion = unseenQuestions[0];
@@ -200,13 +218,15 @@ export const getNextQuestion = () => {
  * @param {Coords} props.clickCoords
  * @return {{score: number, nextAskDate: number}}
  */
-export const answerQuestion = ({clickedFeature, clickCoords} = {}) => {
+export const answerQuestion = ({ clickedFeature, clickCoords } = {}) => {
   let score; // from 0 to 1
 
   if (!clickedFeature) {
     // No answer attempted
     score = 0;
-  } else if (clickedFeature.properties.name === currentQuestion.properties.name) {
+  } else if (
+    clickedFeature.properties.name === currentQuestion.properties.name
+  ) {
     // Answer is exactly correct
     score = 1;
   } else {
@@ -220,7 +240,7 @@ export const answerQuestion = ({clickedFeature, clickCoords} = {}) => {
 
   const nextAskDate = updateAnswerHistory(score);
 
-  return {score, nextAskDate};
+  return { score, nextAskDate };
 };
 
 /**
@@ -232,18 +252,21 @@ export const answerQuestion = ({clickedFeature, clickCoords} = {}) => {
  * @param {{features: Array<QuestionFeature>}} props.questionFeatureCollection
  * @param {Array<AnswerHistoryItem>} props.answerHistory
  */
-export const init = ({id, questionFeatureCollection, answerHistory}) => {
+export const init = ({ id, questionFeatureCollection, answerHistory }) => {
   userId = id;
 
-  // For now, check to see if there was any history stored in LS. This can be removed eventually so I'll no
-  // longer store progress in LS.
+  // For now, check to see if there was any history stored in LS.
+  // This can be removed eventually so I'll no longer store progress in LS.
   if (!answerHistory.length) {
     const localAnswerHistory = storageUtils.get(STORAGE_KEYS.ANSWER_HISTORY);
     answerHistoryMap = dataUtils.arrayToMap(localAnswerHistory || []);
 
     if (localAnswerHistory && localAnswerHistory.length) {
       // Take it out of LS And save it to the server
-      cabService.update(userId, {answerHistory: dataUtils.mapToArray(answerHistoryMap)})
+      cabService
+        .update(userId, {
+          answerHistory: dataUtils.mapToArray(answerHistoryMap),
+        })
         .then(response => {
           if (response.error) {
             console.error('Could not save progress:', response.error);

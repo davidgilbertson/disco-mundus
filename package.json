@@ -7,15 +7,22 @@
   "scripts": {
     "start": "firebase serve -p 3000",
     "test": "node ./public/runTests.mjs",
+    "lint": "eslint public --fix --cache --ext .mjs",
     "deploy": "firebase deploy"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "glob": "latest"
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "firebase-tools": "^7.11.0",
+    "glob": "latest",
+    "prettier": "1.19.1"
   },
-  "dependencies": {
-    "firebase-tools": "^7.11.0"
+  "prettier": {
+    "trailingComma": "es5",
+    "singleQuote": true
   }
 }
