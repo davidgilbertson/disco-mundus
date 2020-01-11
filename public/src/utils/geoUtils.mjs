@@ -29,7 +29,7 @@ export const getTopPoint = polygon => {
  *
  * @param {QuestionFeature} polygon1
  * @param {QuestionFeature} polygon2
- * @returns {boolean}
+ * @return {boolean}
  */
 export const areNeighbors = (polygon1, polygon2) => {
   const coords1Arr = polygon1.geometry.coordinates

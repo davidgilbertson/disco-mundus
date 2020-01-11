@@ -13,6 +13,9 @@ let lastHoveredFeatureId = null;
 const featuresWithStatus = new Map();
 const popups = [];
 
+/**
+ * @param {QuestionFeature} feature
+ */
 export const panTo = feature => {
   map.panTo(feature.properties.center);
 };
