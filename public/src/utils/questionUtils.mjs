@@ -52,7 +52,8 @@ export const calculateAnswerScore = ({
   correctQuestionFeature,
   clickedQuestionFeature,
 }) => {
-  // Note, it would be nice to test if two features share a point, but features can be thousands
+  // Note, it would be nice to test if two features share a point,
+  // but features can be thousands
   // of points, so millions of combinations.
   if (geoUtils.areNeighbors(correctQuestionFeature, clickedQuestionFeature)) {
     return DMSR.SCORE_FOR_NEIGHBOR;

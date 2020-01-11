@@ -1,13 +1,12 @@
+import * as cabService from './cabService.mjs';
 import * as dataUtils from './utils/dataUtils.mjs';
-import * as questionUtils from './utils/questionUtils.mjs';
-import * as storageUtils from './utils/storageUtils.mjs';
 import * as dateTimeUtils from './utils/dateTimeUtils.mjs';
-import cabService from './cabService.mjs';
-import { STORAGE_KEYS } from './constants.mjs';
+import * as questionUtils from './utils/questionUtils.mjs';
 
 /**
  * @typedef AnswerHistoryItem
  * @property {number} id - the feature ID
+ * @property {number} lastScore
  * @property {number} nextAskDate - date/time in milliseconds.
  * @property {number} lastAskDate - date/time in milliseconds.
  *    Used to calculate the nextAskDate once a question is answered
@@ -48,9 +47,6 @@ class QuestionManager {
     /** @type {?QuestionFeature} */
     this.currentQuestion = null;
 
-    /** @type {?Map<number, AnswerHistoryItem>} */
-    this.answerHistoryMap = null;
-
     /** @type {Array<QuestionFeature>} */
     this.queue = []; // A set of questions to be completed before moving on
 
@@ -62,38 +58,18 @@ class QuestionManager {
    * Doesn't return. Features can be accessed with getNextQuestion()
    *
    * @param {object} props
-   * @param {string} props.id
+   * @param {string} props.userId
    * @param {{features: Array<QuestionFeature>}} props.questionFeatureCollection
    * @param {Array<AnswerHistoryItem>} props.answerHistory
    */
-  init({ id, questionFeatureCollection, answerHistory }) {
-    this.userId = id;
+  init({ userId, questionFeatureCollection, answerHistory }) {
+    this.userId = userId;
 
-    // For now, check to see if there was any history stored in LS.
-    // This can be removed eventually so I'll no longer store progress in LS.
-    if (!answerHistory.length) {
-      const localAnswerHistory = storageUtils.get(STORAGE_KEYS.ANSWER_HISTORY);
-      this.answerHistoryMap = dataUtils.arrayToMap(localAnswerHistory || []);
-
-      if (localAnswerHistory && localAnswerHistory.length) {
-        // Take it out of LS And save it to the server
-        cabService
-          .update(this.userId, {
-            answerHistory: dataUtils.mapToArray(this.answerHistoryMap),
-          })
-          .then(response => {
-            if (response.error) {
-              console.error('Could not save progress:', response.error);
-            }
-          });
-      }
-    } else {
-      this.answerHistoryMap = dataUtils.arrayToMap(answerHistory);
-    }
+    const answerHistoryMap = dataUtils.arrayToMap(answerHistory);
 
     this.allQuestionFeatures = questionFeatureCollection.features.map(
       feature => {
-        const matchingHistoryItem = this.answerHistoryMap.get(feature.id) || {};
+        const matchingHistoryItem = answerHistoryMap.get(feature.id) || {};
 
         return dataUtils.updateFeatureProps(feature, {
           nextAskDate: matchingHistoryItem.nextAskDate,
@@ -130,32 +106,7 @@ class QuestionManager {
       return dataUtils.updateFeatureProps(feature, newProps);
     });
 
-    // Update the history data to save to the database
-    this.answerHistoryMap.set(
-      this.currentQuestion.id,
-      Object.assign({}, { id: this.currentQuestion.id }, newProps)
-    );
-
-    // For now, while testing, I'll keep saving to LS.
-    // But if anything comes back from the server on page load, LS is ignored.
-    storageUtils.set(
-      STORAGE_KEYS.ANSWER_HISTORY,
-      dataUtils.mapToArray(this.answerHistoryMap)
-    );
-
-    // This setup kinda-sorta handles temporarily going offline.
-    // If you answer two questions in a tunnel with no reception,
-    // then a third when back online, everything is saved
-    cabService
-      .update(this.userId, {
-        answerHistory: dataUtils.mapToArray(this.answerHistoryMap),
-      })
-      .then(response => {
-        if (response.error) {
-          console.error('Could not save progress:', response.error);
-        }
-      });
-
+    cabService.saveAnswerHistory(this.userId, this.allQuestionFeatures);
     return nextAskDate;
   }
 
@@ -306,4 +257,7 @@ class QuestionManager {
   }
 }
 
-export default new QuestionManager();
+let questionManager = new QuestionManager();
+export default questionManager;
+
+window.questionManager = questionManager;

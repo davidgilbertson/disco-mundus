@@ -1,8 +1,8 @@
+import * as cabService from './cabService.mjs';
 import * as dom from './dom.mjs';
 import * as geoUtils from './utils/geoUtils.mjs';
 import * as mapboxManager from './mapboxManager.mjs';
 import * as questionUtils from './utils/questionUtils.mjs';
-import cabService from './cabService.mjs';
 import questionManager from './questionManager.mjs';
 
 let isAwaitingAnswer = false;
@@ -91,65 +91,6 @@ dom.onClickNextButton(() => {
   askNextQuestion();
 });
 
-const getOrCreateHistory = async () => {
-  // Changing this string would break progress for all users. So don't do that.
-  const PROGRESS_ID_STRING = 'your-progress-id';
-
-  // Get the ID from the URL
-  const url = new URL(document.location);
-  let id = url.searchParams.get(PROGRESS_ID_STRING);
-
-  // Or if none, try local storage
-  if (!id) {
-    id = localStorage.getItem(PROGRESS_ID_STRING);
-
-    // So, the ID wasn't in the URL but was in storage. So put it in the URL
-    if (id) {
-      url.searchParams.set(PROGRESS_ID_STRING, id);
-      window.history.replaceState('', null, url.href);
-    }
-  } else {
-    // If it was in the URL, put it in storage too
-    // We want this in LS because the 'installed' version of the site
-    // won't have the URL param
-    localStorage.setItem(PROGRESS_ID_STRING, id);
-  }
-
-  if (id) {
-    const response = await cabService.read(id);
-
-    if (!response.error) {
-      return {
-        answerHistory: response.data.answerHistory,
-        id,
-      };
-    }
-
-    console.error('Seems like that was a bad ID.', response.error);
-  }
-
-  // There was no ID, or a bad ID, so create a new session
-  const response = await cabService.create({ answerHistory: [] });
-
-  if (!response.error) {
-    // We've got a new ID, put it in the URL
-    url.searchParams.set(PROGRESS_ID_STRING, response.id);
-    window.history.replaceState('', null, url.href);
-
-    // And LS too, for good measure
-    localStorage.setItem(PROGRESS_ID_STRING, response.id);
-
-    return {
-      answerHistory: [],
-      id: response.id,
-    };
-  }
-
-  console.error('Could not create a new session.', response.error);
-
-  throw Error('Something has gone terribly wrong');
-};
-
 (async () => {
   // Kick off loading of:
   // * suburb data
@@ -157,7 +98,7 @@ const getOrCreateHistory = async () => {
   // * the map
   const [questionFeatureCollection, historyData] = await Promise.all([
     fetch('data/sydneySuburbs.json').then(response => response.json()),
-    getOrCreateHistory(),
+    cabService.loadAnswerHistory(),
     mapboxManager.init({ onFeatureClick: handleResponse }),
   ]);
 
@@ -180,7 +121,7 @@ const getOrCreateHistory = async () => {
   questionManager.init({
     questionFeatureCollection,
     answerHistory: historyData.answerHistory,
-    id: historyData.id,
+    userId: historyData.userId,
   });
 
   dom.setStatsText(questionManager.getPageStats());
