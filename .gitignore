@@ -1,5 +1,6 @@
 .idea
 .firebase
+.eslintcache
 node_modules
 private
 
