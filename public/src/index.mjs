@@ -2,8 +2,8 @@ import * as cabService from './cabService.mjs';
 import * as dom from './dom.mjs';
 import * as geoUtils from './utils/geoUtils.mjs';
 import * as mapboxManager from './mapboxManager.mjs';
+import * as questionManager from './questionManager.mjs';
 import * as questionUtils from './utils/questionUtils.mjs';
-import questionManager from './questionManager.mjs';
 
 let isAwaitingAnswer = false;
 
@@ -57,7 +57,7 @@ const handleResponse = ({ clickedFeature, clickCoords } = {}) => {
       questionText = 'Wrong, but very close!';
     }
 
-    const rightAnswer = questionManager.currentQuestion;
+    const rightAnswer = questionManager.getCurrentQuestion();
     mapboxManager.markRight(rightAnswer.id);
     mapboxManager.addPopup({
       lngLat: geoUtils.getTopPoint(rightAnswer),
@@ -81,7 +81,7 @@ const handleResponse = ({ clickedFeature, clickCoords } = {}) => {
 };
 
 dom.onClickNoIdeaButton(() => {
-  mapboxManager.panTo(questionManager.currentQuestion);
+  mapboxManager.panTo(questionManager.getCurrentQuestion());
   handleResponse();
 });
 
