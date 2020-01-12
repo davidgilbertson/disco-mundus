@@ -22,6 +22,6 @@ export const DMSR = {
   FIRST_TIME_MINS: 20, // default duration before the first review
   MIN_MINS: 1, // The shortest possible duration
   MULTIPLIER: 2,
-  LOOKAHEAD_WINDOW_MINS: 10,
+  LOOKAHEAD_WINDOW_MINS: 5,
   SESSION_SIZE: 10, // How many new questions to learn at once
 };

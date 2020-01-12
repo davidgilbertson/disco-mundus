@@ -48,7 +48,7 @@ const state = {
    * A set of IDs that make up the current session's questions
    * @type {Set<number>}
    * */
-  sessionQueue: new Set(), // A set of questions to be completed before moving on
+  sessionQueue: new Set(),
 
   /** @type {boolean} */
   isReviewingLots: false,
@@ -298,7 +298,11 @@ export const getPageStats = () => {
   let unseen = 0;
 
   state.questionFeatures.forEach(feature => {
-    if (!feature.properties.nextAskDate) unseen++;
+    const isInQueue = state.sessionQueue.has(feature.id);
+
+    if (!feature.properties.nextAskDate && !isInQueue) {
+      unseen++;
+    }
   });
 
   const later = state.questionFeatures.size - unseen - now;
