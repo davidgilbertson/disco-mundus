@@ -23,7 +23,7 @@ test('Should convert intervals to human words', () => {
     { millis: 1000 * 60 * 60 * 24 * 365 * 1000, result: '1000 years' },
   ].forEach(testData => {
     assert.strictEqual(
-      questionUtils.getIntervalAsWords(testData.millis),
+      questionUtils.getDateTimeAsWords(Date.now() + testData.millis),
       testData.result
     );
   });

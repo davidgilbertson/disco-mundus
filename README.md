@@ -22,50 +22,77 @@ less benefit.
 
 ### Short version
 
-It doubles the interval for correct answers, divides by ten for wrong answers,
-and allows for partial correctness.
+It doubles the interval for correct answers and allows for partial correctness.
 
 ### Long version
 
-First, a score between 0 and 1 is generated for the user's answer.
+First, a score between 0 and 100% is generated for the user's answer.
 
-- If they were correct, let the score be 1; else
+- If they were correct, let the score be 100%; else
 - If the feature they tapped is adjacent to the correct feature, let the score
-  be 0.8; else
+  be 80%; else
 - The distance between the tapped place and the center of the correct feature is
   used to grade the score:
-  - Between 0 and x KM, grade the score from 1 down to 0.
-  - x KM or more away, let the score be 0
+  - Between 0 and 4KM, grade the score from 100 down to 0%.
+  - x KM or more away, let the score be 0%
 
-The score is then converted to a multiplier between 0.1 and 2.
+The score is then converted to a multiplier between 0 and 2.
 
 The time since the last review (or 10 minutes, if this is the first review) is
 then multiplied by the multiplier, and used to set the next review time.
 
 There is a minimum review interval of 1 minute.
 
-For example, if it's been 10 days since a user last answered a question (meaning
-they had probably got it right several times in a row), then if:
+Answering incorrectly essentially 'resets' a question, since the multiplier is
+0, it will revert back to 1 minute.
 
-- they get it wrong (score 0): we will ask in 1 day
-- they are close (score 0.5): we will ask in another 10
-- they get it right (score 1): we will ask again in 20 days
+### Session queue
+
+At all times, questions are asked from a queue. This is a subset of the total
+set of questions. All questions in the session queue are presented for review
+before any new questions are asked. When the page is first loaded, any questions
+ready for review are put in the session queue. Once all of these questions have
+been reviewed sufficiently (and the session queue is empty) 10 new questions
+will be picked to populate the session queue (to be configurable in the future).
+
+A question may be presented several times, based on the next review date and the
+lookahead window. For example: a user is reviewing their questions, and answer
+one incorrectly. The 'next review time' is set to one minute. Because one minute
+is less than the 'lookahead window' of 10 minutes, it is kept in the queue so
+that it can be reviewed again before moving on to new questions. Specifically, a
+question answered incorrectly once must be answered correctly twice before it's
+removed from the session queue.
+
+If a question is answered correctly on the first attempt, its next ask date will
+be 20 minutes in the future, which falls outside the lookahead window, and so it
+will be removed from the session queue immediately, avoiding unnecessary
+repetitions.
+
+### Variables
+
+- **Multiplier:** for a correct answer, how much will the previous interval be
+  multiplied by to get the next interval.
+- **First review time:** when a question is first answered, what should the
+  review time be for a correct answer.
+- **Minimum review time:** If a question is answered incorrectly (has a score of
+  0%), the next review should not be set to 0 minutes. Instead, this minimum
+  should be enforced.
+- **Lookahead window:** when selecting the next question, how far into the
+  future should we look. E.g. if lookahead window is 10 minutes, and there is a
+  question due for review in 5 minutes, then the system would ask that question,
+  before removing it from the queue and moving on to new questions.
 
 ### A weak spot
 
-There is a potential weak spot here: the scenario where the user doesn't use the
-app for weeks or months when they have quite young questions. They may have only
-answered a question once, and completely forgotten it, but if it's 20 days since
-they used the app, a wrong answer will still put the review at 2 days ahead. It
-would then take a few days of answering question incorrectly (each time
-multiplying the previous interval by 0.1) for them to be treated the same as the
-SM-2 algorithm would (which is treating a wrong answer as though the question
-had never been seen).
+A user may know and answer very well, and the last duration was a few months,
+but they bump the screen and get the answer wrong. The question gets reset, but
+really it will only be five or six extra reviews to get it back up again.
 
 ## Ongoing review
 
 The results will be monitored. The goal is that 90% of answers are correct or
-very close (score > 0.8) when using the app daily.
+very close (score > 80%) when using the app daily - dependent on how many new
+questions are being asked.
 
 For the well-remembered questions, there would be ~4 revisions in the first
 week, 2 more for the rest of the month, another 4 for the rest of the year, and
@@ -74,7 +101,7 @@ so on.
 Running `printStats()` in the console will print stats. Also clicking on my
 house will show them as a popup :)
 
-The scaling of the score is currently hardcoded as 5 KM, as the app only shows
+The scaling of the score is currently hardcoded as 4KM, as the app only shows
 Sydney suburbs and this scale works fine. Eventually, I'll want something more
 sophisticated like the distance between two points as a ratio of the diameter of
 the target feature.

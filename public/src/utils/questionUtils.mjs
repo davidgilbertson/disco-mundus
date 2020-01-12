@@ -9,25 +9,25 @@ import { DMSR } from '../constants.mjs';
  * Details in the README.md
  *
  * @param {object} props
- * @param {DateTimeMillis} props.now
+ * @param {QuestionFeature} props.question
  * @param {number} props.score - between 0 and 1
- * @param {DateTimeMillis} [props.lastAskDate]
- * @return {DateTimeMillis} the next date/time, in
- *   milliseconds at which the question should be asked
+ * @return {DateTimeMillis} nextAskDate - when the question should next be asked
  */
-export const getNextAskDate = ({ score, now, lastAskDate }) => {
+export const getNextAskDate = ({ question, score }) => {
   if (score < 0 || score > 1 || typeof score === 'undefined') {
     throw Error('Score must be between 0 and 1');
   }
+  const { lastAskDate, nextAskDate } = question.properties;
+
+  // If we review a question a few minutes early, we want to calculate the
+  // next review time based on when it was supposed to be asked.
+  const ostensibleAnswerDate = Math.max(Date.now(), nextAskDate || 0);
 
   const lastInterval = lastAskDate
-    ? now - lastAskDate
-    : dateTimeUtils.minsToMillis(DMSR.FIRST_TIME_MINS); // For new questions
+    ? ostensibleAnswerDate - lastAskDate
+    : dateTimeUtils.minsToMillis(DMSR.FIRST_TIME_MINS / DMSR.MULTIPLIER);
 
-  // We stretch the score (0 to 1) to fit the multiplier bounds ...
-  const multiplier =
-    score * (DMSR.MULTIPLIERS.MAX - DMSR.MULTIPLIERS.MIN) +
-    DMSR.MULTIPLIERS.MIN;
+  const multiplier = score * DMSR.MULTIPLIER;
 
   // ... and multiply the last interval by it (never less than 1 minute)
   const nextInterval = Math.max(
@@ -35,7 +35,7 @@ export const getNextAskDate = ({ score, now, lastAskDate }) => {
     lastInterval * multiplier
   );
 
-  return Math.round(now + nextInterval);
+  return Math.round(ostensibleAnswerDate + nextInterval);
 };
 
 /**
@@ -69,36 +69,43 @@ export const calculateAnswerScore = ({
   );
 };
 
+export const getReviewCutoff = () =>
+  Date.now() + dateTimeUtils.minsToMillis(DMSR.LOOKAHEAD_WINDOW_MINS);
+
 /**
- * Converts a duration into a readable string
+ * Converts a date/time into a readable string
  *
- * @param {number} millis - a period of time in milliseconds
+ * @param {DateTimeMillis} dateTime - a time, presumably in the future
  * @return {string}
  */
-export const getIntervalAsWords = millis => {
+export const getDateTimeAsWords = dateTime => {
+  if (dateTime < getReviewCutoff()) return 'soon';
+
+  const millis = dateTime - Date.now();
+
   const minutes = Math.round(millis / 1000 / 60);
-  if (minutes < 2) return '1 minute';
-  if (minutes < 50) return `${minutes} minutes`;
+  if (minutes < 2) return 'in 1 minute';
+  if (minutes < 50) return `in ${minutes} minutes`;
 
   const hours = Math.round(minutes / 60);
-  if (hours < 2) return '1 hour';
-  if (hours < 20) return `${hours} hours`;
+  if (hours < 2) return 'in 1 hour';
+  if (hours < 20) return `in ${hours} hours`;
 
   const days = Math.round(hours / 24);
-  if (days < 2) return '1 day';
-  if (days < 6) return `${days} days`;
+  if (days < 2) return 'in 1 day';
+  if (days < 6) return `in ${days} days`;
 
   const weeks = Math.round(days / 7);
-  if (weeks < 2) return 'a week';
-  if (weeks < 3) return 'a week and a bit';
-  if (weeks < 4) return `${weeks} weeks`;
+  if (weeks < 2) return 'in a week';
+  if (weeks < 3) return 'in a week and a bit';
+  if (weeks < 4) return `in ${weeks} weeks`;
 
   const months = Math.round(days / 30);
-  if (months < 2) return 'a month';
-  if (months < 11) return `${months} months`;
+  if (months < 2) return 'in a month';
+  if (months < 11) return `in ${months} months`;
 
   const years = Math.round(days / 365);
-  if (years < 2) return 'a year';
+  if (years < 2) return 'in a year';
 
-  return `${years} years`;
+  return `in ${years} years`;
 };

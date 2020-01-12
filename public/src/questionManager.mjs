@@ -2,6 +2,7 @@ import * as cabService from './cabService.mjs';
 import * as dataUtils from './utils/dataUtils.mjs';
 import * as dateTimeUtils from './utils/dateTimeUtils.mjs';
 import * as questionUtils from './utils/questionUtils.mjs';
+import { DMSR } from './constants.mjs';
 
 /**
  * @typedef AnswerHistoryItem
@@ -37,14 +38,20 @@ const state = {
   /** @type {?string} */
   userId: null,
 
-  /** @type {Array<QuestionFeature>} */
-  allQuestionFeatures: [],
+  /** @type {Map<number, QuestionFeature>} */
+  questionFeatures: new Map(),
 
   /** @type {?QuestionFeature} */
   currentQuestion: null,
 
-  /** @type {Array<QuestionFeature>} */
-  queue: [], // A set of questions to be completed before moving on
+  /**
+   * A set of IDs that make up the current session's questions
+   * @type {Set<number>}
+   * */
+  sessionQueue: new Set(), // A set of questions to be completed before moving on
+
+  /** @type {boolean} */
+  isReviewingLots: false,
 };
 
 /**
@@ -52,9 +59,22 @@ const state = {
  */
 export const getCurrentQuestion = () => state.currentQuestion;
 
+const populateQueueWithNewQuestions = () => {
+  for (const feature of state.questionFeatures.values()) {
+    // TODO (davidg): this should actually get questions with nextAskDate <
+    //  the threshold. This wouldn't happen on the first fetch of 10, but
+    //  would happen on subsequent ones, potentially.
+    if (!feature.properties.nextAskDate) {
+      state.sessionQueue.add(feature.id);
+
+      if (state.sessionQueue.size === DMSR.SESSION_SIZE) return;
+    }
+  }
+};
+
 /**
- * Mixes in answer history and sorts the features by nextAskDate.
- * Doesn't return. Features can be accessed with getNextQuestion()
+ * Mixes question features and answer history
+ * Doesn't return. Question features can be accessed with getNextQuestion()
  *
  * @param {object} props
  * @param {string} props.userId
@@ -66,69 +86,104 @@ export const init = ({ userId, questionFeatureCollection, answerHistory }) => {
 
   const answerHistoryMap = dataUtils.arrayToMap(answerHistory);
 
-  state.allQuestionFeatures = questionFeatureCollection.features.map(
-    feature => {
-      const matchingHistoryItem = answerHistoryMap.get(feature.id) || {};
+  const reviewCutoff = questionUtils.getReviewCutoff();
 
-      return dataUtils.updateFeatureProps(feature, {
-        nextAskDate: matchingHistoryItem.nextAskDate,
-        lastAskDate: matchingHistoryItem.lastAskDate,
-        lastScore: matchingHistoryItem.lastScore,
-      });
+  questionFeatureCollection.features.forEach(feature => {
+    const matchingHistoryItem = answerHistoryMap.get(feature.id) || {};
+
+    if (
+      matchingHistoryItem.nextAskDate &&
+      matchingHistoryItem.nextAskDate < reviewCutoff
+    ) {
+      state.sessionQueue.add(feature.id);
     }
-  );
 
-  // Now, we populate the queue.
-  // - If there's questions to review, they're the queue
-  // - Else take 10 new ones
-};
+    const questionFeature = dataUtils.updateFeatureProps(feature, {
+      nextAskDate: matchingHistoryItem.nextAskDate,
+      lastAskDate: matchingHistoryItem.lastAskDate,
+      lastScore: matchingHistoryItem.lastScore,
+    });
 
-const updateAnswerHistory = score => {
-  const now = Date.now();
-
-  const nextAskDate = questionUtils.getNextAskDate({
-    lastAskDate: state.currentQuestion.properties.lastAskDate,
-    score,
-    now,
+    state.questionFeatures.set(feature.id, questionFeature);
   });
 
+  if (!state.sessionQueue.size) {
+    populateQueueWithNewQuestions();
+  } else {
+    // Later, we'll tell the user they're finished reviewing
+    // We only bother if they've got quite a few to do
+    if (state.sessionQueue.size > 10) {
+      state.isReviewingLots = true;
+    }
+  }
+
+  // TODO (davidg): if there are still none, there's nothing left to learn.
+  //  The UI should reflect this
+};
+
+/**
+ * Update the local question set and save the results to the database
+ *
+ * @param {number} score
+ * @param {DateTimeMillis} nextAskDate
+ * @return {void}
+ */
+const updateAnswerHistory = ({ score, nextAskDate }) => {
   const newProps = {
-    lastAskDate: now,
+    lastAskDate: Date.now(),
     lastScore: score,
     nextAskDate,
   };
 
-  // Update the item in the array of features in memory
-  state.allQuestionFeatures = state.allQuestionFeatures.map(feature => {
-    if (feature.id !== state.currentQuestion.id) return feature;
+  state.questionFeatures.set(
+    state.currentQuestion.id,
+    dataUtils.updateFeatureProps(state.currentQuestion, newProps)
+  );
 
-    return dataUtils.updateFeatureProps(feature, newProps);
-  });
+  cabService.saveAnswerHistory(
+    state.userId,
+    dataUtils.mapToArray(state.questionFeatures)
+  );
 
-  cabService.saveAnswerHistory(state.userId, state.allQuestionFeatures);
-  return nextAskDate;
+  const reviewCutoff = questionUtils.getReviewCutoff();
+
+  if (nextAskDate > reviewCutoff) {
+    // This question is far enough in the future. Stop asking.
+    state.sessionQueue.delete(state.currentQuestion.id);
+
+    if (!state.sessionQueue.size) {
+      populateQueueWithNewQuestions();
+
+      if (state.isReviewingLots) {
+        state.isReviewingLots = false;
+
+        setTimeout(() => {
+          window.alert(
+            `You've finished your reviews! Queueing up 10 new questions.`
+          );
+        });
+      }
+    }
+  }
 };
 
 /**
- * Returns the next question due to be reviewed,
- * or if there are none, a not-seen-yet question
- * The list could be slightly different each time,
- * so we loop through every time we want a new question
+ * Returns the next question due to be reviewed from the queue.
+ * Prefers new questions if there are any, else will review those in
+ * the queue
  *
  * @return {QuestionFeature} - the next appropriate question
  */
 export const getNextQuestion = () => {
   let nextReviewQuestion;
-  const unseenQuestions = [];
 
-  state.allQuestionFeatures.forEach(question => {
-    if (!question.properties.nextAskDate) {
-      unseenQuestions.push(question);
-      return;
-    }
+  // It is assumed that if a question in the queue, it's ready to be asked
+  state.sessionQueue.forEach(questionId => {
+    const question = state.questionFeatures.get(questionId);
 
     if (
-      !nextReviewQuestion ||
+      !nextReviewQuestion || // first loop
+      !question.properties.nextAskDate || // Prefer brand new questions
       question.properties.nextAskDate <
         nextReviewQuestion.properties.nextAskDate
     ) {
@@ -136,14 +191,11 @@ export const getNextQuestion = () => {
     }
   });
 
-  if (
-    nextReviewQuestion &&
-    nextReviewQuestion.properties.nextAskDate < Date.now()
-  ) {
-    state.currentQuestion = nextReviewQuestion;
-  } else {
-    state.currentQuestion = unseenQuestions[0];
+  if (!nextReviewQuestion) {
+    throw Error('This should not be possible.');
   }
+
+  state.currentQuestion = nextReviewQuestion;
 
   return state.currentQuestion;
 };
@@ -174,7 +226,12 @@ export const answerQuestion = ({ clickedFeature, clickCoords } = {}) => {
     });
   }
 
-  const nextAskDate = updateAnswerHistory(score);
+  const nextAskDate = questionUtils.getNextAskDate({
+    question: state.currentQuestion,
+    score,
+  });
+
+  updateAnswerHistory({ score, nextAskDate });
 
   return { score, nextAskDate };
 };
@@ -195,7 +252,7 @@ export const generateAndPrintStats = showAlert => {
   let total = 0;
   const now = Date.now();
 
-  state.allQuestionFeatures.forEach(feature => {
+  state.questionFeatures.forEach(feature => {
     const { lastScore, lastAskDate } = feature.properties;
 
     // Questions that haven't been answered are ignored
@@ -234,25 +291,19 @@ export const generateAndPrintStats = showAlert => {
 };
 
 /**
- * @return {{future: number, today: number, unseen: number}}
+ * @return {{now: number, later: number, unseen: number}}
  */
 export const getPageStats = () => {
-  let today = 0;
+  let now = state.sessionQueue.size;
   let unseen = 0;
-  let future = 0;
-  const now = Date.now();
 
-  state.allQuestionFeatures.forEach(feature => {
-    if (!feature.properties.nextAskDate) {
-      unseen++;
-    } else if (feature.properties.nextAskDate < now) {
-      today++;
-    } else {
-      future++;
-    }
+  state.questionFeatures.forEach(feature => {
+    if (!feature.properties.nextAskDate) unseen++;
   });
 
-  return { today, unseen, future };
+  const later = state.questionFeatures.size - unseen - now;
+
+  return { now, later, unseen };
 };
 
 window.printStats = () => generateAndPrintStats();

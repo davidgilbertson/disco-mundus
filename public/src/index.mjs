@@ -65,13 +65,11 @@ const handleResponse = ({ clickedFeature, clickCoords } = {}) => {
     });
   }
 
-  const nextDuration = questionUtils.getIntervalAsWords(
-    nextAskDate - Date.now()
-  );
+  const nextDuration = questionUtils.getDateTimeAsWords(nextAskDate);
   questionText += `
     <br>
     <small>
-      Next review in ${nextDuration}
+      Next review ${nextDuration}
     </small>
   `;
 

@@ -15,18 +15,13 @@ export const FEATURE_STATUS = {
   WRONG: 'WRONG',
 };
 
-export const STORAGE_KEYS = {
-  ANSWER_HISTORY: 'ANSWER_HISTORY',
-};
-
 // Disco Mundus Spaced Repetition constants
 export const DMSR = {
   SCORE_FOR_NEIGHBOR: 0.8, // score for clicking a neighbor
   CLOSE_M: 4000, // in meters
-  FIRST_TIME_MINS: 10,
+  FIRST_TIME_MINS: 20, // default duration before the first review
   MIN_MINS: 1, // The shortest possible duration
-  MULTIPLIERS: {
-    MIN: 0.1,
-    MAX: 2,
-  },
+  MULTIPLIER: 2,
+  LOOKAHEAD_WINDOW_MINS: 10,
+  SESSION_SIZE: 10, // How many new questions to learn at once
 };

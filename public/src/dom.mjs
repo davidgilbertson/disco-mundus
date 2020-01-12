@@ -36,11 +36,17 @@ export const onClickNextButton = func => {
   nextButton.addEventListener('click', func);
 };
 
-export const setStatsText = ({ today, unseen, future }) => {
+/**
+ * @param {object} props
+ * @param {number} props.now
+ * @param {number} props.later
+ * @param {number} props.unseen
+ */
+export const setStatsText = ({ now, later, unseen }) => {
   statsEl.innerHTML = [
-    `Review now: ${today}`,
+    `Review now: ${now}`,
     '<span class="stats-spacer">|</span>',
-    `Review later: ${future}`,
+    `Review later: ${later}`,
     '<span class="stats-spacer">|</span>',
     `Unseen: ${unseen}`,
   ].join('');

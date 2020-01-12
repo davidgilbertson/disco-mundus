@@ -23,6 +23,7 @@
   },
   "prettier": {
     "trailingComma": "es5",
+    "proseWrap": "always",
     "singleQuote": true
   }
 }
