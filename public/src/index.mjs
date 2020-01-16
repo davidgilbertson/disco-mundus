@@ -1,8 +1,10 @@
+import * as logUtils from './utils/logUtils.mjs';
 import './app.mjs';
 
-// TODO (davidg): ...
-// navigator.serviceWorker
-//   .register('/src/serviceWorker.mjs')
-//   .then(registration => {
-//     console.log('>  index.mjs:6 >  > registration', registration);
+logUtils.logTime('Executing JavaScript');
+
+// if ('serviceWorker' in navigator) {
+//   navigator.serviceWorker.register('/dmServiceWorker.mjs').catch(err => {
+//     console.error(err);
 //   });
+// }

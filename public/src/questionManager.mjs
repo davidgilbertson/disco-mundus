@@ -1,13 +1,12 @@
 import * as cabService from './cabService.mjs';
 import * as dataUtils from './utils/dataUtils.mjs';
-import * as dateTimeUtils from './utils/dateTimeUtils.mjs';
 import * as questionUtils from './utils/questionUtils.mjs';
 import { DMSR } from './constants.mjs';
 
 /**
  * @typedef AnswerHistoryItem
  * @property {number} id - the feature ID
- * @property {number} lastScore
+ * @property {number} lastScore - currently not used
  * @property {number} nextAskDate - date/time in milliseconds.
  * @property {number} lastAskDate - date/time in milliseconds.
  *    Used to calculate the nextAskDate once a question is answered
@@ -47,17 +46,38 @@ const state = {
   /**
    * A set of IDs that make up the current session's questions
    * @type {Set<number>}
-   * */
+   */
   sessionQueue: new Set(),
 
-  /** @type {boolean} */
-  isReviewingLots: false,
+  /**
+   * We'll show an modal after finishing a review session
+   * @type {boolean}
+   */
+  isSignificantSession: false,
+
+  sessionStats: {
+    WRONG: { name: 'Wrong', count: 0 },
+    CLOSE: { name: 'Close', count: 0 },
+    RIGHT: { name: 'Right', count: 0 },
+  },
 };
+
+window.DM_questionManagerState = state;
 
 /**
  * @return {QuestionFeature}
  */
 export const getCurrentQuestion = () => state.currentQuestion;
+
+const updateSessionStats = score => {
+  if (score === 0) {
+    state.sessionStats.WRONG.count++;
+  } else if (score < 1) {
+    state.sessionStats.CLOSE.count++;
+  } else {
+    state.sessionStats.RIGHT.count++;
+  }
+};
 
 const populateQueueWithNewQuestions = () => {
   for (const feature of state.questionFeatures.values()) {
@@ -113,7 +133,7 @@ export const init = ({ userId, questionFeatureCollection, answerHistory }) => {
     // Later, we'll tell the user they're finished reviewing
     // We only bother if they've got quite a few to do
     if (state.sessionQueue.size > 10) {
-      state.isReviewingLots = true;
+      state.isSignificantSession = true;
     }
   }
 
@@ -129,10 +149,16 @@ export const init = ({ userId, questionFeatureCollection, answerHistory }) => {
  * @return {void}
  */
 const updateAnswerHistory = ({ score, nextAskDate }) => {
+  // For the first answer each session record the score in session stats
+  if (!state.currentQuestion.properties.answeredThisSession) {
+    updateSessionStats(score);
+  }
+
   const newProps = {
     lastAskDate: Date.now(),
     lastScore: score,
     nextAskDate,
+    answeredThisSession: true, // this is never saved
   };
 
   state.questionFeatures.set(
@@ -151,15 +177,22 @@ const updateAnswerHistory = ({ score, nextAskDate }) => {
     // This question is far enough in the future. Stop asking.
     state.sessionQueue.delete(state.currentQuestion.id);
 
+    // If this was the last item in the queue ...
     if (!state.sessionQueue.size) {
       populateQueueWithNewQuestions();
 
-      if (state.isReviewingLots) {
-        state.isReviewingLots = false;
+      if (state.isSignificantSession) {
+        state.isSignificantSession = false;
 
         setTimeout(() => {
           window.alert(
-            `You've finished your reviews! Queueing up 10 new questions.`
+            [
+              `You've finished your reviews!`,
+              '-----------------------------',
+              questionUtils.getSessionStatsAsString(state.sessionStats),
+              '-----------------------------',
+              `Queueing up ${DMSR.SESSION_SIZE} new questions.`,
+            ].join('\n')
           );
         });
       }
@@ -237,60 +270,6 @@ export const answerQuestion = ({ clickedFeature, clickCoords } = {}) => {
 };
 
 /**
- * Prints stats to the console about questions that have been answered so far
- *
- * @param {boolean} [showAlert]
- * @return {void}
- */
-export const generateAndPrintStats = showAlert => {
-  const SCORE_BRACKETS = {
-    WRONG: { name: 'Wrong', count: 0 },
-    CLOSE: { name: 'Close', count: 0 },
-    RIGHT: { name: 'Right', count: 0 },
-  };
-
-  let total = 0;
-  const now = Date.now();
-
-  state.questionFeatures.forEach(feature => {
-    const { lastScore, lastAskDate } = feature.properties;
-
-    // Questions that haven't been answered are ignored
-    if (typeof lastScore === 'undefined') return;
-
-    // Only include the last few days of answers
-    // (at least for now, while I'm tweaking the algorithm)
-    if (now - lastAskDate > dateTimeUtils.daysToMillis(2)) return;
-
-    let scoreBracket;
-    if (lastScore === 0) {
-      scoreBracket = SCORE_BRACKETS.WRONG;
-    } else if (lastScore < 0.8) {
-      scoreBracket = SCORE_BRACKETS.CLOSE;
-    } else {
-      scoreBracket = SCORE_BRACKETS.RIGHT;
-    }
-
-    total++;
-    scoreBracket.count++;
-  });
-
-  if (!total) return;
-
-  const finalMessage = [];
-
-  Object.values(SCORE_BRACKETS).forEach(scoreBracket => {
-    const percent = Math.round((scoreBracket.count / total) * 100);
-
-    const message = `${scoreBracket.name}: ${percent}% (${scoreBracket.count})`;
-    console.info(message);
-    finalMessage.push(message);
-  });
-
-  if (showAlert) window.alert(finalMessage.join('\n'));
-};
-
-/**
  * @return {{now: number, later: number, unseen: number}}
  */
 export const getPageStats = () => {
@@ -309,6 +288,3 @@ export const getPageStats = () => {
 
   return { now, later, unseen };
 };
-
-window.printStats = () => generateAndPrintStats();
-window.questionManagerState = state;

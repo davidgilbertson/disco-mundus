@@ -109,3 +109,21 @@ export const getDateTimeAsWords = dateTime => {
 
   return `in ${years} years`;
 };
+
+export const getSessionStatsAsString = sessionStats => {
+  const finalMessage = [];
+
+  const total = Object.values(sessionStats).reduce(
+    (acc, item) => acc + item.count,
+    0
+  );
+
+  Object.values(sessionStats).forEach(scoreBracket => {
+    const percent = Math.round((scoreBracket.count / total) * 100);
+
+    const message = `${scoreBracket.name}: ${percent}% (${scoreBracket.count})`;
+    finalMessage.push(message);
+  });
+
+  return finalMessage.join('\n');
+};

@@ -1,6 +1,7 @@
 import * as cabService from './cabService.mjs';
 import * as dom from './dom.mjs';
 import * as geoUtils from './utils/geoUtils.mjs';
+import * as logUtils from './utils/logUtils.mjs';
 import * as mapboxManager from './mapboxManager.mjs';
 import * as questionManager from './questionManager.mjs';
 import * as questionUtils from './utils/questionUtils.mjs';
@@ -89,16 +90,9 @@ dom.onClickNextButton(() => {
   askNextQuestion();
 });
 
-// window.setInterval(() => {
-//   const downloadBytes = performance
-//     .getEntries()
-//     .map(item => item.transferSize)
-//     .filter(Boolean)
-//     .reduce((acc, item) => acc + item, 0);
-//
-//   console.log('Bandwidth used:', downloadBytes / 1000, ' KB');
-// }, 2000);
-
+// TODO (davidg): might it be faster to get the questions/map first,
+// and start the long CPU process of rendering the question features
+// and THEN go to the network to get the answer history?
 (async () => {
   // Kick off loading of:
   // * suburb data
@@ -110,21 +104,11 @@ dom.onClickNextButton(() => {
     mapboxManager.init({ onFeatureClick: handleResponse }),
   ]);
 
+  logUtils.logTime('Data and map loaded');
+
   // When all three are ready, render the data to
   // the map and start asking questions
   mapboxManager.addSuburbsLayer(questionFeatureCollection);
-
-  // Clicking on my house shows stats
-  mapboxManager.onClick(e => {
-    const myHouseBounds = new mapboxgl.LngLatBounds([
-      { lng: 151.07749659127188, lat: -33.82599275017796 },
-      { lng: 151.0783350111576, lat: -33.825089019351836 },
-    ]);
-
-    if (myHouseBounds.contains(e.lngLat)) {
-      questionManager.generateAndPrintStats(true);
-    }
-  });
 
   questionManager.init({
     questionFeatureCollection,
@@ -134,6 +118,7 @@ dom.onClickNextButton(() => {
 
   dom.setStatsText(questionManager.getPageStats());
   askNextQuestion();
+  logUtils.logTime('App ready');
 
   // We want to refresh the stats if the user comes back after a while
   // Particularly on the mobile as an 'installed' app where it doesn't refresh
