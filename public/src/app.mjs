@@ -1,9 +1,10 @@
 import * as cabService from './cabService.mjs';
 import * as dom from './dom.mjs';
-import * as geoUtils from './utils/geoUtils.mjs';
-import * as logUtils from './utils/logUtils.mjs';
 import * as mapboxManager from './mapboxManager.mjs';
 import * as questionManager from './questionManager.mjs';
+import * as dataUtils from './utils/dataUtils.mjs';
+import * as geoUtils from './utils/geoUtils.mjs';
+import * as logUtils from './utils/logUtils.mjs';
 import * as questionUtils from './utils/questionUtils.mjs';
 
 let isAwaitingAnswer = false;
@@ -119,6 +120,18 @@ dom.onClickNextButton(() => {
   dom.setStatsText(questionManager.getPageStats());
   askNextQuestion();
   logUtils.logTime('App ready');
+
+  // Clicking on my house shows stats
+  mapboxManager.onClick(e => {
+    const myHouseBounds = new mapboxgl.LngLatBounds([
+      { lng: 151.07749659127188, lat: -33.82599275017796 },
+      { lng: 151.0783350111576, lat: -33.825089019351836 },
+    ]);
+
+    if (myHouseBounds.contains(e.lngLat)) {
+      dataUtils.getAppInfo().then(window.alert);
+    }
+  });
 
   // We want to refresh the stats if the user comes back after a while
   // Particularly on the mobile as an 'installed' app where it doesn't refresh

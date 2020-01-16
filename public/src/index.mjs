@@ -3,8 +3,6 @@ import './app.mjs';
 
 logUtils.logTime('Executing JavaScript');
 
-// if ('serviceWorker' in navigator) {
-//   navigator.serviceWorker.register('/dmServiceWorker.mjs').catch(err => {
-//     console.error(err);
-//   });
-// }
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/dmServiceWorker.mjs').catch(console.error);
+}

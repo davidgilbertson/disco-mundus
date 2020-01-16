@@ -2,8 +2,6 @@ const CACHE_NAME = 'Disco Mundus V2';
 
 self.addEventListener('install', e => {
   const populateCache = async () => {
-    // TODO (davidg): work this out. I want to re-fetch them all in the
-    //  background on page load (where eTags are different)
     const cache = await caches.open(CACHE_NAME);
 
     return cache.addAll([
@@ -44,12 +42,12 @@ self.addEventListener('install', e => {
 
 self.addEventListener('fetch', e => {
   // We want it to ignore the query params so it can fetch '/'
-  const plainUrl = e.request.url.replace(/\?.*/, '');
+  const url = e.request.url.replace(/\?.*/, '');
 
   const handleRequest = async () => {
     // We'll cache satellite and streets data. Mapbox does this already,
     // but they're a bit stingy with their expires.
-    if (e.request.url.startsWith('https://api.mapbox.com/v4/')) {
+    if (url.startsWith('https://api.mapbox.com/v4/')) {
       // TODO (davidg): for mapbox tile requests, can I fetch them, but modify
       //  then Expires header before returning it? Simpler than storing it, right?
       // Mapbox has some level of service worker caching, I think for tiles.
@@ -58,45 +56,43 @@ self.addEventListener('fetch', e => {
       // TODO (davidg): prefer cache for navigation.connect.effectiveType !==
       //  '4g' and maybe saveData !== true
 
-      const cacheResponse = await caches.match(plainUrl);
+      const cacheResponse = await caches.match(url);
 
       if (cacheResponse) return cacheResponse;
 
-      console.log('> Mapbox tile miss', plainUrl);
+      // console.info('> Caching Mapbox tile:', url);
 
+      // Fetch the original request, with query parameters
       const fetchResponse = await fetch(e.request);
 
-      if (fetchResponse && fetchResponse.status === 200) {
-        // The below happens async while the response is being returned
+      if (fetchResponse.ok) {
+        // The below happens asynchronously while the response is being returned
         const clonedResponse = fetchResponse.clone();
-        caches
-          .open(CACHE_NAME)
-          .then(cache => cache.put(plainUrl, clonedResponse));
+
+        caches.open(CACHE_NAME).then(cache => cache.put(url, clonedResponse));
       }
 
       return fetchResponse;
     }
 
-    // For any other third party requests, just fetch/return
+    // For any other third party requests, fetch/return
     // (extensions, Mapbox fonts, Velantrix, etc)
-    if (!e.request.url.includes(self.location.origin)) return fetch(e.request);
+    if (!url.includes(self.location.origin)) return fetch(e.request);
 
     // Otherwise, it's a site asset. Load it from cache, and refresh the cache
     // (ETags will prevent unnecessary downloads)
-    const cacheResponse = await caches.match(plainUrl);
+    const cacheResponse = await caches.match(url);
 
-    if (cacheResponse) {
-      // Refresh the cache (async) while returning the cached response
-      fetch(e.request).then(fetchResponse => {
-        caches
-          .open(CACHE_NAME)
-          .then(cache => cache.put(plainUrl, fetchResponse));
-      });
+    // Refresh the cache (async) while returning the cached response
+    fetch(e.request).then(fetchResponse => {
+      caches.open(CACHE_NAME).then(cache => cache.put(url, fetchResponse));
+    });
 
-      return cacheResponse;
-    }
+    if (cacheResponse) return cacheResponse;
 
-    console.warn('> Maybe this should be cached:', plainUrl);
+    // If we get to this point, it's because I'm missing something
+    // in the oninstall code
+    console.warn('> This should be cached on install:', url);
     return fetch(e.request);
   };
 
