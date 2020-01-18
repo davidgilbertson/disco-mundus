@@ -152,7 +152,7 @@ export const init = ({ onFeatureClick }) =>
 
     map.on('mousemove', MAP_LAYERS.SUBURBS, e => {
       if (e.features.length > 0) {
-        const thisFeatureId = e.features[e.features.length - 1].id;
+        const thisFeatureId = e.features[0].id;
         // If the mouse is still on the same hovered feature, bail
         if (lastHoveredFeatureId && thisFeatureId === lastHoveredFeatureId) {
           return;
@@ -178,7 +178,9 @@ export const init = ({ onFeatureClick }) =>
 
     map.on('click', MAP_LAYERS.SUBURBS, e => {
       if (e.features.length > 0) {
-        const topFeature = e.features[e.features.length - 1];
+        // The features in the collection are sorted, so top item will be
+        // first in the array
+        const topFeature = e.features[0];
         const featureCollection = map.getSource(MAP_LAYERS.SUBURBS).serialize()
           .data;
 
