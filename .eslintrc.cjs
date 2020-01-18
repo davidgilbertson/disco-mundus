@@ -23,7 +23,7 @@ module.exports = {
     'prettier/prettier': 'error',
     'no-alert': 'off',
     'no-console': ['error', {
-      allow: ['info', 'warn', 'error']
+      allow: ['info', 'warn', 'error', 'time', 'timeEnd']
     }],
   },
 };
