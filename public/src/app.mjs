@@ -2,7 +2,6 @@ import * as cabService from './cabService.mjs';
 import * as dom from './dom.mjs';
 import * as mapboxManager from './mapboxManager.mjs';
 import * as questionManager from './questionManager.mjs';
-import * as dataUtils from './utils/dataUtils.mjs';
 import * as geoUtils from './utils/geoUtils.mjs';
 import * as logUtils from './utils/logUtils.mjs';
 import * as questionUtils from './utils/questionUtils.mjs';
@@ -129,7 +128,7 @@ dom.onClickNextButton(() => {
     ]);
 
     if (myHouseBounds.contains(e.lngLat)) {
-      dataUtils.getAppInfo().then(window.alert);
+      logUtils.getAppInfo().then(window.alert);
     }
   });
 
