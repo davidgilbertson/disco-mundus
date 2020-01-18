@@ -10,7 +10,7 @@ export const getAppInfo = async () => {
   return [
     'Disco Mundus',
     '----------',
-    'Version: 2',
+    'Version: 3',
     `Storage used: ${usage.toLocaleString()} MB of ${quota.toLocaleString()} MB`,
   ].join('\n');
 };
