@@ -5,10 +5,11 @@
   "main": "public/src/index.mjs",
   "type": "module",
   "scripts": {
-    "start": "firebase serve -p 3000",
+    "start": "parcel ./public/index.html",
+    "build": "parcel build ./public/index.html",
     "test": "node ./public/runTests.mjs",
     "lint": "eslint public --fix --cache --ext .mjs",
-    "deploy": "firebase deploy"
+    "deploy": "npm run build && firebase deploy"
   },
   "keywords": [],
   "author": "",
@@ -24,11 +25,15 @@
     "eslint-plugin-prettier": "^3.1.2",
     "firebase-tools": "^7.11.0",
     "glob": "latest",
+    "parcel-bundler": "^1.12.4",
     "prettier": "1.19.1"
   },
   "prettier": {
     "trailingComma": "es5",
     "proseWrap": "always",
     "singleQuote": true
-  }
+  },
+  "browserslist": [
+    "last 2 Chrome versions"
+  ]
 }

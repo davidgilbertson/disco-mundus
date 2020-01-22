@@ -138,7 +138,8 @@ export const init = ({ onFeatureClick }) =>
   new Promise(resolve => {
     map = new mapboxgl.Map({
       container: 'map',
-      style: 'mapbox://styles/mapbox/satellite-streets-v9',
+      style: 'mapbox://styles/davidg707/ck53i8fv90e8w1cqqdyi87ka4',
+      // style: 'mapbox://styles/mapbox/satellite-streets-v9',
       center: {
         lng: 151.09599472830712,
         lat: -33.856237652995084,
