@@ -6,7 +6,7 @@ node_modules
 private
 
 # I want the dist/data directory, but nothing else in dist
-/dist/**
-!/dist/data/**
+dist/*
+!dist/data
 
 firebase-debug.log
