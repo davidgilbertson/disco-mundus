@@ -62,7 +62,7 @@ const state = {
   },
 };
 
-window.DM_questionManagerState = state;
+window.DM_STATE = state;
 
 /**
  * @return {QuestionFeature}
@@ -79,15 +79,19 @@ const updateSessionStats = score => {
   }
 };
 
+/** @return {void} */
 const populateQueueWithNewQuestions = () => {
-  for (const feature of state.questionFeatures.values()) {
-    // TODO (davidg): this should actually get questions with nextAskDate <
-    //  the threshold. This wouldn't happen on the first fetch of 10, but
-    //  would happen on subsequent ones, potentially.
+  const arrayClone = Array.from(state.questionFeatures.values());
+
+  // TODO (davidg): this should also get questions with nextAskDate <
+  //  the threshold.
+  // Get a random selection of questions
+  while (state.sessionQueue.size < DMSR.SESSION_SIZE && arrayClone.length) {
+    const randomIndex = Math.round(Math.random() * (arrayClone.length - 1));
+    const feature = arrayClone.splice(randomIndex, 1)[0];
+
     if (!feature.properties.nextAskDate) {
       state.sessionQueue.add(feature.id);
-
-      if (state.sessionQueue.size === DMSR.SESSION_SIZE) return;
     }
   }
 };
