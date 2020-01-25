@@ -61,3 +61,25 @@ export const distanceBetween = (point1, point2) => {
 
   return Math.sqrt(latDiffMeters ** 2 + lngDiffMeters ** 2);
 };
+
+/**
+ * Get the appropriate zoom level to fit a certain number of kms on a
+ * certain sized screen. Like 'zoom to fit' but can be used for the initial
+ * rendering of the map.
+ *
+ * @param {object} props
+ * @param {number} props.kms - e.g. 70 to fit Sydney which is 70km wide
+ * @param {number} [props.pixels] - e.g. the device width
+ * @param {number} [props.lat] - the latitude
+ * @return {number}
+ */
+export const getZoomToFit = ({ kms, pixels = window.innerWidth, lat = 0 }) => {
+  // This is based on what I could find here:
+  // https://docs.mapbox.com/help/glossary/zoom-level
+
+  // Work out the kms/pixel for the given latitude
+  const kpp = 78.271484 * Math.sin((Math.PI / 2) * ((90 - lat) / 90));
+
+  // Work out the correct zoom to fit the given kms
+  return Math.log2(kpp / (kms / pixels));
+};

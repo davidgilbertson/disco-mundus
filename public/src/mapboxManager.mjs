@@ -168,14 +168,20 @@ export const onClick = cb => {
 
 export const init = ({ onFeatureClick }) =>
   new Promise(resolve => {
+    const SYDNEY_LNG_LAT = {
+      lng: 150.95257825424233,
+      lat: -33.856237652995084,
+    };
+    const SYDNEY_WIDTH_KM = 70;
+
     map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/davidg707/ck53i8fv90e8w1cqqdyi87ka4',
-      center: {
-        lng: 151.09599472830712,
-        lat: -33.856237652995084,
-      },
-      zoom: 9,
+      center: SYDNEY_LNG_LAT,
+      zoom: geoUtils.getZoomToFit({
+        kms: SYDNEY_WIDTH_KM,
+        lat: SYDNEY_LNG_LAT.lat,
+      }),
     });
 
     window.DM_MAP = map;
