@@ -78,7 +78,7 @@ export const getZoomToFit = ({ kms, pixels = window.innerWidth, lat = 0 }) => {
   // https://docs.mapbox.com/help/glossary/zoom-level
 
   // Work out the kms/pixel for the given latitude
-  const kpp = 78.271484 * Math.sin((Math.PI / 2) * ((90 - lat) / 90));
+  const kpp = 78.271484 * Math.cos(Math.PI * (lat / 180));
 
   // Work out the correct zoom to fit the given kms
   return Math.log2(kpp / (kms / pixels));
