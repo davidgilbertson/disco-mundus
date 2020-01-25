@@ -4,6 +4,7 @@
  */
 import { MAP_LAYERS, FEATURE_STATUS, MAP_SOURCES } from './constants.mjs';
 import * as geoUtils from './utils/geoUtils.mjs';
+import { interpolate, match } from './utils/mapboxLayerHelpers.mjs';
 
 mapboxgl.accessToken =
   'pk.eyJ1IjoiZGF2aWRnNzA3IiwiYSI6ImNqZWVxaGtnazF2czAyeXFlcDlvY2kwZDQifQ.WSmiQO0ccl85_FvEDTsBmw';
@@ -38,7 +39,10 @@ export const clearStatus = featureId => {
 
   featuresWithStatus.delete(featureId);
 
-  map.removeFeatureState({ source: MAP_LAYERS.SUBURBS, id: featureId });
+  map.removeFeatureState({
+    source: MAP_SOURCES.SUBURBS,
+    id: featureId,
+  });
 };
 
 /**
@@ -58,7 +62,7 @@ export const setStatus = ({ featureId, status }) => {
   featuresWithStatus.set(featureId, status);
 
   map.setFeatureState(
-    { source: MAP_LAYERS.SUBURBS, id: featureId },
+    { source: MAP_SOURCES.SUBURBS, id: featureId },
     { status }
   );
 };
@@ -85,48 +89,76 @@ export const addSuburbsLayer = suburbsFeatureCollection => {
     data: suburbsFeatureCollection,
   });
 
+  map.addLayer(
+    {
+      id: MAP_LAYERS.LOCATION_BORDERS,
+      source: MAP_SOURCES.SUBURBS,
+      type: 'line',
+      paint: {
+        'line-color': interpolate({
+          prop: 'zoom',
+          type: interpolate.exponential(2),
+          stops: [
+            { if: 9, then: 'rgba(255, 255, 255, 0.1)' },
+            { if: 11, then: 'rgba(255, 255, 255, 0.7)' },
+          ],
+        }),
+        'line-width': interpolate({
+          prop: 'zoom',
+          type: interpolate.exponential(2),
+          stops: [
+            { if: 9, then: 0.5 },
+            { if: 12, then: 0.9 },
+          ],
+        }),
+      },
+    },
+    // Show the borders before the first of the line layers
+    map.getStyle().layers.find(item => item.type === 'line').id
+  );
+
+  // The highlight state layers go on top of everything
   map.addLayer({
-    id: MAP_LAYERS.SUBURBS,
+    id: MAP_LAYERS.LOCATION_HIGHLIGHT_FILL,
     source: MAP_SOURCES.SUBURBS,
     type: 'fill',
     paint: {
-      // prettier-ignore
-      'fill-color': [
-        'match',
-        ['feature-state', 'status'],
-        FEATURE_STATUS.WRONG, 'rgba(240, 0, 0, 0.2)',
-        FEATURE_STATUS.RIGHT, 'rgba(0, 200, 0, 0.2)',
-        FEATURE_STATUS.SELECTED, 'rgba(0, 97, 200, 0.1)',
-        'rgba(0, 0, 0, 0)' // not visible
-      ]
+      'fill-color': match({
+        state: 'status',
+        cases: [
+          { if: FEATURE_STATUS.WRONG, then: 'rgba(240, 0, 0, 0.2)' },
+          { if: FEATURE_STATUS.RIGHT, then: 'rgba(0, 200, 0, 0.2)' },
+          { if: FEATURE_STATUS.SELECTED, then: 'rgba(0, 97, 200, 0.1)' },
+          { else: 'rgba(0, 0, 0, 0)' }, // not visible
+        ],
+      }),
     },
   });
 
   map.addLayer({
-    id: MAP_LAYERS.SUBURBS_LINE,
+    id: MAP_LAYERS.LOCATION_HIGHLIGHT_LINE,
     source: MAP_SOURCES.SUBURBS,
     type: 'line',
-    // prettier-ignore
     paint: {
-      'line-color': [
-        'match',
-        ['feature-state', 'status'],
-        FEATURE_STATUS.WRONG, 'rgba(240, 0, 0, 1)',
-        FEATURE_STATUS.RIGHT, 'rgba(0, 200, 0, 1)',
-        FEATURE_STATUS.SELECTED, 'rgba(0, 97, 200, 1)',
-        FEATURE_STATUS.HOVERED, 'rgba(255, 255, 255, 1)',
-        'rgba(255, 255, 255, 0.3)'
-      ],
-      'line-width': [
-        'match',
-        ['feature-state', 'status'],
-        FEATURE_STATUS.WRONG, 3,
-        FEATURE_STATUS.RIGHT, 3,
-        FEATURE_STATUS.SELECTED, 3,
-        FEATURE_STATUS.HOVERED, 1,
-        0.5
-      ],
-    }
+      'line-color': match({
+        state: 'status',
+        cases: [
+          { if: FEATURE_STATUS.WRONG, then: 'rgb(240, 0, 0)' },
+          { if: FEATURE_STATUS.RIGHT, then: 'rgb(0, 200, 0)' },
+          { if: FEATURE_STATUS.SELECTED, then: 'rgb(0, 97, 200)' },
+          { if: FEATURE_STATUS.HOVERED, then: 'rgb(255, 255, 255)' },
+          { else: 'rgba(0, 0, 0, 0)' }, // not visible
+        ],
+      }),
+      'line-width': interpolate({
+        prop: 'zoom',
+        type: interpolate.exponential(2),
+        stops: [
+          { if: 9, then: 1 },
+          { if: 12, then: 2.5 },
+        ],
+      }),
+    },
   });
 };
 
@@ -139,19 +171,20 @@ export const init = ({ onFeatureClick }) =>
     map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/davidg707/ck53i8fv90e8w1cqqdyi87ka4',
-      // style: 'mapbox://styles/mapbox/satellite-streets-v9',
       center: {
         lng: 151.09599472830712,
         lat: -33.856237652995084,
       },
-      zoom: 11,
+      zoom: 9,
     });
 
-    map.on('mouseenter', MAP_LAYERS.SUBURBS, () => {
+    window.DM_MAP = map;
+
+    map.on('mouseenter', MAP_LAYERS.LOCATION_HIGHLIGHT_FILL, () => {
       map.getCanvas().style.cursor = 'pointer';
     });
 
-    map.on('mousemove', MAP_LAYERS.SUBURBS, e => {
+    map.on('mousemove', MAP_LAYERS.LOCATION_HIGHLIGHT_FILL, e => {
       if (e.features.length > 0) {
         const thisFeatureId = e.features[0].id;
         // If the mouse is still on the same hovered feature, bail
@@ -171,18 +204,18 @@ export const init = ({ onFeatureClick }) =>
     });
 
     // When the mouse leaves the layer
-    map.on('mouseleave', MAP_LAYERS.SUBURBS, () => {
+    map.on('mouseleave', MAP_LAYERS.LOCATION_HIGHLIGHT_FILL, () => {
       map.getCanvas().style.cursor = '';
       lastHoveredFeatureId = null;
       clearStatuses(FEATURE_STATUS.HOVERED);
     });
 
-    map.on('click', MAP_LAYERS.SUBURBS, e => {
+    map.on('click', MAP_LAYERS.LOCATION_HIGHLIGHT_FILL, e => {
       if (e.features.length > 0) {
         // The features in the collection are sorted, so top item will be
         // first in the array
         const topFeature = e.features[0];
-        const featureCollection = map.getSource(MAP_LAYERS.SUBURBS).serialize()
+        const featureCollection = map.getSource(MAP_SOURCES.SUBURBS).serialize()
           .data;
 
         /** @type {QuestionFeature} */
@@ -221,22 +254,5 @@ export const init = ({ onFeatureClick }) =>
       }
     });
 
-    map.on('load', () => {
-      map
-        .getStyle()
-        .layers.filter(layer => layer.type === 'symbol')
-        .forEach(layer => {
-          // Show the place labels only when zoomed in a bit more
-          if (layer.id.startsWith('place-')) {
-            map.setLayerZoomRange(layer.id, layer.minzoom + 2, layer.maxzoom);
-          }
-
-          // Make the road labels visible sooner
-          if (layer.id === 'road-label-xlarge') {
-            map.setLayerZoomRange(layer.id, layer.minzoom - 2, layer.maxzoom);
-          }
-        });
-
-      resolve();
-    });
+    map.on('load', resolve);
   });
