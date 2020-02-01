@@ -2,6 +2,8 @@ export const logTime = msg => {
   console.info(msg, Math.round(performance.now()));
 };
 
+window.DM_VERSION = 6;
+
 export const getAppInfo = async () => {
   const estimate = await navigator.storage.estimate();
   const usage = Math.round(estimate.usage / 1000000);
@@ -10,7 +12,7 @@ export const getAppInfo = async () => {
   return [
     'Disco Mundus',
     '----------',
-    'Version: 5',
+    `Version: ${window.DM_VERSION}`,
     `Storage used: ${usage.toLocaleString()} MB of ${quota.toLocaleString()} MB`,
   ].join('\n');
 };

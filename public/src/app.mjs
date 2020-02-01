@@ -98,7 +98,7 @@ dom.onClickNextButton(() => {
   // * suburb data
   // * history data
   // * the map
-  const [questionFeatureCollection, historyData] = await Promise.all([
+  const [questionFeatureCollection, answerHistory] = await Promise.all([
     fetch('data/sydneySuburbs.json').then(response => response.json()),
     cabService.loadAnswerHistory(),
     mapboxManager.init({ onFeatureClick: handleResponse }),
@@ -112,8 +112,7 @@ dom.onClickNextButton(() => {
 
   questionManager.init({
     questionFeatureCollection,
-    answerHistory: historyData.answerHistory,
-    userId: historyData.userId,
+    answerHistory,
   });
 
   dom.setStatsText(questionManager.getPageStats());

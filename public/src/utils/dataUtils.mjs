@@ -1,6 +1,32 @@
 export const arrayToMap = arr => new Map(arr.map(item => [item.id, item]));
 
-export const mapToArray = map => Array.from(map.values());
+/**
+ * @template T
+ * @param {Array<T>} array
+ * @param {T} newItem
+ * @return {Array<T>|undefined}
+ */
+export const upsert = (array, newItem) => {
+  if (!newItem.id) {
+    console.error(`This item doesn't have an id:`, newItem);
+    return;
+  }
+
+  let itemExists = false;
+
+  const nextArray = array.map(existingItem => {
+    if (existingItem.id === newItem.id) {
+      itemExists = true;
+      return newItem;
+    }
+
+    return existingItem;
+  });
+
+  if (!itemExists) nextArray.push(newItem);
+
+  return nextArray;
+};
 
 /**
  * @param {QuestionFeature} feature

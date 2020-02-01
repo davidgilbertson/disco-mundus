@@ -4,15 +4,6 @@ import * as questionUtils from './utils/questionUtils.mjs';
 import { DMSR } from './constants.mjs';
 
 /**
- * @typedef AnswerHistoryItem
- * @property {number} id - the feature ID
- * @property {number} lastScore - currently not used
- * @property {number} nextAskDate - date/time in milliseconds.
- * @property {number} lastAskDate - date/time in milliseconds.
- *    Used to calculate the nextAskDate once a question is answered
- */
-
-/**
  * @typedef {number} DateTimeMillis - the date/time in
  *   milliseconds since the epoch
  */
@@ -34,9 +25,6 @@ import { DMSR } from './constants.mjs';
  */
 
 const state = {
-  /** @type {?string} */
-  userId: null,
-
   /** @type {Map<number, QuestionFeature>} */
   questionFeatures: new Map(),
 
@@ -101,13 +89,13 @@ const populateQueueWithNewQuestions = () => {
  * Doesn't return. Question features can be accessed with getNextQuestion()
  *
  * @param {object} props
- * @param {string} props.userId
  * @param {{features: Array<QuestionFeature>}} props.questionFeatureCollection
- * @param {Array<AnswerHistoryItem>} props.answerHistory
+ * @param {AnswerHistory} props.answerHistory
  */
-export const init = ({ userId, questionFeatureCollection, answerHistory }) => {
-  state.userId = userId;
-
+export const init = ({ questionFeatureCollection, answerHistory }) => {
+  // TODO (davidg): I want to separate this into init() and update()
+  //  I think that's just taking the loop of questions and iterating again
+  //  this should add to the session Set() nicely
   const answerHistoryMap = dataUtils.arrayToMap(answerHistory);
 
   const reviewCutoff = questionUtils.getReviewCutoff();
@@ -165,15 +153,14 @@ const updateAnswerHistory = ({ score, nextAskDate }) => {
     answeredThisSession: true, // this is never saved
   };
 
-  state.questionFeatures.set(
-    state.currentQuestion.id,
-    dataUtils.updateFeatureProps(state.currentQuestion, newProps)
+  const newQuestionFeature = dataUtils.updateFeatureProps(
+    state.currentQuestion,
+    newProps
   );
 
-  cabService.saveAnswerHistory(
-    state.userId,
-    dataUtils.mapToArray(state.questionFeatures)
-  );
+  state.questionFeatures.set(state.currentQuestion.id, newQuestionFeature);
+
+  cabService.saveAnswer(newQuestionFeature);
 
   const reviewCutoff = questionUtils.getReviewCutoff();
 
