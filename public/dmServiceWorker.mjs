@@ -1,58 +1,75 @@
 const CACHE_NAME = 'Disco Mundus V2';
 
+const filesToCache = [
+  '/', // home page in a browser
+  '/index.html', // home page for the installed PWA
+  'favicon.ico',
+  'manifest.webmanifest',
+  'data/sydneySuburbs.json',
+
+  // TODO (davidg): these is now broken with parcel. Fix during CRA move
+  // 'icons/favicon-32x32.png',
+  // 'icons/android-chrome-192x192.png',
+
+  // // CSS
+  // 'src/main.css',
+  //
+  // // Scripts
+  // 'src/app.mjs',
+  // 'src/cabService.mjs',
+  // 'src/constants.mjs',
+  // 'src/dom.mjs',
+  // 'src/index.mjs',
+  // 'src/mapboxManager.mjs',
+  // 'src/questionManager.mjs',
+  // 'src/utils/dataUtils.mjs',
+  // 'src/utils/dateTimeUtils.mjs',
+  // 'src/utils/geoUtils.mjs',
+  // 'src/utils/logUtils.mjs',
+  // 'src/utils/questionUtils.mjs',
+  // 'src/utils/storageUtils.mjs',
+
+  // Third party
+  'https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.0/mapbox-gl.css',
+  'https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.0/mapbox-gl.js',
+];
+
 self.addEventListener('install', e => {
   e.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
 
-      return cache.addAll([
-        '/', // home page in a browser
-        '/index.html', // home page for the installed PWA
-        'favicon.ico',
-        'manifest.webmanifest',
-        'icons/favicon-32x32.png',
-        'icons/android-chrome-192x192.png',
-        'data/sydneySuburbs.json',
-
-        // CSS
-        'src/main.css',
-
-        // Scripts
-        'src/app.mjs',
-        'src/cabService.mjs',
-        'src/constants.mjs',
-        'src/dom.mjs',
-        'src/index.mjs',
-        'src/mapboxManager.mjs',
-        'src/questionManager.mjs',
-        'src/utils/dataUtils.mjs',
-        'src/utils/dateTimeUtils.mjs',
-        'src/utils/geoUtils.mjs',
-        'src/utils/logUtils.mjs',
-        'src/utils/questionUtils.mjs',
-        'src/utils/storageUtils.mjs',
-
-        // Third party
-        'https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.0/mapbox-gl.css',
-        'https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.0/mapbox-gl.js',
-      ]);
+      return cache.addAll(filesToCache);
     })()
   );
 });
 
+/**
+ * @param {string} url
+ * @return {string}
+ */
 const getCleanUrl = url => {
   const cleanUrl = new URL(url);
   cleanUrl.search = '';
   return cleanUrl.href;
 };
 
+/**
+ * @param {string} href
+ * @return {boolean}
+ */
+const isCachedUrl = href => {
+  if (filesToCache.find(path => path.includes(href))) return true;
+  return href.includes(self.location.origin);
+};
+
 self.addEventListener('fetch', e => {
   e.respondWith(
     (async () => {
-      const url = getCleanUrl(e.request.url);
+      const href = getCleanUrl(e.request.url);
 
-      if (url.startsWith('https://api.mapbox.com/v4/')) {
-        const cacheResponse = await caches.match(url);
+      if (href.startsWith('https://api.mapbox.com/v4/')) {
+        const cacheResponse = await caches.match(href);
 
         if (cacheResponse) return cacheResponse;
 
@@ -65,7 +82,9 @@ self.addEventListener('fetch', e => {
           // The below happens asynchronously while the response is being returned
           const clonedResponse = fetchResponse.clone();
 
-          caches.open(CACHE_NAME).then(cache => cache.put(url, clonedResponse));
+          caches
+            .open(CACHE_NAME)
+            .then(cache => cache.put(href, clonedResponse));
         }
 
         return fetchResponse;
@@ -73,22 +92,22 @@ self.addEventListener('fetch', e => {
 
       // For any other third party requests, fetch/return
       // (extensions, Mapbox fonts, Velantrix, etc)
-      if (!url.includes(self.location.origin)) return fetch(e.request);
+      if (!isCachedUrl(href)) return fetch(e.request);
 
       // Otherwise, it's a site asset. Load it from cache, and refresh the cache
       // (ETags will prevent unnecessary downloads)
-      const cacheResponse = await caches.match(url);
+      const cacheResponse = await caches.match(href);
 
       // Refresh the cache (async) while returning the cached response
       fetch(e.request).then(fetchResponse => {
-        caches.open(CACHE_NAME).then(cache => cache.put(url, fetchResponse));
+        caches.open(CACHE_NAME).then(cache => cache.put(href, fetchResponse));
       });
 
       if (cacheResponse) return cacheResponse;
 
       // If we get to this point, it's because I'm missing something
       // in the oninstall code
-      console.warn('> This should have been cached on install:', url);
+      console.warn('> This should have been cached on install:', href);
       return fetch(e.request);
     })()
   );
