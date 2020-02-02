@@ -26,3 +26,8 @@ export const DMSR = {
   LOOKAHEAD_WINDOW_MINS: 5,
   SESSION_SIZE: 10, // How many new questions to learn at once
 };
+
+export const DISPLAY_PHASES = {
+  QUESTION: 'QUESTION',
+  ANSWER: 'ANSWER',
+};

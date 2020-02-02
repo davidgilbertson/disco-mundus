@@ -58,6 +58,8 @@ export const clearStatuses = statusToClear => {
   });
 };
 
+// TODO (davidg): could all this be some amazing connection with the store
+// using afterChange()?
 export const setStatus = ({ featureId, status }) => {
   if (!featureId) return;
 

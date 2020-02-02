@@ -1,7 +1,10 @@
+import { store } from 'react-recollect';
 import * as cabService from './cabService';
+import * as mapboxManager from './mapboxManager';
 import * as dataUtils from './utils/dataUtils';
+import * as geoUtils from './utils/geoUtils';
 import * as questionUtils from './utils/questionUtils';
-import { DMSR } from './constants';
+import { DISPLAY_PHASES, DMSR } from './constants';
 
 /**
  * @typedef {number} DateTimeMillis - the date/time in
@@ -196,7 +199,7 @@ const updateAnswerHistory = ({ score, nextAskDate }) => {
  *
  * @return {QuestionFeature} - the next appropriate question
  */
-export const getNextQuestion = () => {
+const getNextQuestion = () => {
   let nextReviewQuestion;
 
   // It is assumed that if a question in the queue, it's ready to be asked
@@ -222,13 +225,21 @@ export const getNextQuestion = () => {
   return state.currentQuestion;
 };
 
+export const askNextQuestion = () => {
+  store.currentQuestion = getNextQuestion();
+  store.displayPhase = DISPLAY_PHASES.QUESTION;
+};
+
 /**
+ * Could be called when the user clicks the map or clicks the 'No idea' button
+ *
  * @param {object} [props]
  * @param {QuestionFeature} props.clickedFeature
  * @param {Coords} props.clickCoords
- * @return {{score: number, nextAskDate: number}}
  */
-export const answerQuestion = ({ clickedFeature, clickCoords } = {}) => {
+export const handleUserAction = ({ clickedFeature, clickCoords } = {}) => {
+  if (store.displayPhase === DISPLAY_PHASES.ANSWER) return;
+
   let score; // from 0 to 1
 
   if (!clickedFeature) {
@@ -255,7 +266,44 @@ export const answerQuestion = ({ clickedFeature, clickCoords } = {}) => {
 
   updateAnswerHistory({ score, nextAskDate });
 
-  return { score, nextAskDate };
+  let answerText;
+  if (score === 1) {
+    answerText = 'Correct!';
+    // TODO (davidg): I don't love that this module talks directly to the map
+    mapboxManager.markRight(clickedFeature.id);
+  } else {
+    if (clickedFeature) {
+      mapboxManager.markWrong(clickedFeature.id);
+    }
+
+    if (score === 0) {
+      if (clickedFeature) {
+        answerText = 'Wrong.';
+      } else {
+        answerText = 'Now you know.';
+      }
+    } else if (score < 0.6) {
+      answerText = 'Wrong, but could be wronger.';
+    } else if (score < 0.8) {
+      answerText = 'Wrong, but close.';
+    } else {
+      answerText = 'Wrong, but very close!';
+    }
+
+    const rightAnswer = getCurrentQuestion();
+    mapboxManager.markRight(rightAnswer.id);
+    mapboxManager.addPopup({
+      lngLat: geoUtils.getTopPoint(rightAnswer),
+      text: rightAnswer.properties.name,
+    });
+  }
+
+  store.answer = {
+    text: answerText,
+    nextAskDate: questionUtils.getDateTimeAsWords(nextAskDate),
+  };
+
+  store.displayPhase = DISPLAY_PHASES.ANSWER;
 };
 
 /**
