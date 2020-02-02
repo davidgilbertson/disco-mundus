@@ -9,7 +9,7 @@ export const arrayToMap = arr => new Map(arr.map(item => [item.id, item]));
 export const upsert = (array, newItem) => {
   if (!newItem.id) {
     console.error(`This item doesn't have an id:`, newItem);
-    return;
+    return undefined;
   }
 
   let itemExists = false;
@@ -33,7 +33,7 @@ export const upsert = (array, newItem) => {
  * @param {object} props
  * @return {QuestionFeature}
  */
-export const updateFeatureProps = (feature, props) =>
-  Object.assign({}, feature, {
-    properties: Object.assign({}, feature.properties, props),
-  });
+export const updateFeatureProps = (feature, props) => ({
+  ...feature,
+  properties: { ...feature.properties, ...props },
+});

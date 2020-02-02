@@ -4,9 +4,9 @@
  */
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MAP_LAYERS, FEATURE_STATUS, MAP_SOURCES } from './constants.mjs';
-import * as geoUtils from './utils/geoUtils.mjs';
-import { interpolate, match } from './utils/mapboxLayerHelpers.mjs';
+import { MAP_LAYERS, FEATURE_STATUS, MAP_SOURCES } from './constants';
+import * as geoUtils from './utils/geoUtils';
+import { interpolate, match } from './utils/mapboxLayerHelpers';
 
 mapboxgl.accessToken =
   'pk.eyJ1IjoiZGF2aWRnNzA3IiwiYSI6ImNqZWVxaGtnazF2czAyeXFlcDlvY2kwZDQifQ.WSmiQO0ccl85_FvEDTsBmw';

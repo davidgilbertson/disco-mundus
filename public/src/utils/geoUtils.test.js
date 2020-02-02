@@ -1,5 +1,5 @@
 import assert from 'assert';
-import * as geoUtils from './geoUtils.mjs';
+import * as geoUtils from './geoUtils';
 
 const now = 1000;
 global.Date.now = () => now;

@@ -1,18 +1,17 @@
 import React from 'react';
 import mapboxgl from 'mapbox-gl';
-import * as cabService from './cabService.mjs';
-import * as mapboxManager from './mapboxManager.mjs';
-import * as questionManager from './questionManager.mjs';
-import * as geoUtils from './utils/geoUtils.mjs';
-import * as logUtils from './utils/logUtils.mjs';
-import * as questionUtils from './utils/questionUtils.mjs';
+import * as cabService from './cabService';
+import * as mapboxManager from './mapboxManager';
+import * as questionManager from './questionManager';
+import * as geoUtils from './utils/geoUtils';
+import * as logUtils from './utils/logUtils';
+import * as questionUtils from './utils/questionUtils';
 
 class App extends React.PureComponent {
   state = {
     isReady: false,
     showNoIdeaButton: false,
     showNextButton: false,
-    showQuestion: false,
     currentQuestion: null,
     statsText: null,
     isAwaitingAnswer: false,
@@ -87,7 +86,6 @@ class App extends React.PureComponent {
   };
 
   handleTouchStart = () => {
-    this.setState({ isTouch: true });
     window.removeEventListener('touchstart', this.handleTouchStart);
   };
 

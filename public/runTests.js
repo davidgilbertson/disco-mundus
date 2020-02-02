@@ -15,7 +15,7 @@ console.time('Test run complete');
 // Yes, yes I could just use Jest
 // TODO (davidg): https://www.npmjs.com/package/chokidar instead?
 glob(
-  'public/**/*.test.mjs',
+  'public/**/*.test.js',
   {absolute: true},
   (err, testFilePaths) => {
     if (err) {

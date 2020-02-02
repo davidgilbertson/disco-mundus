@@ -1,6 +1,6 @@
-import * as dateTimeUtils from './dateTimeUtils.mjs';
-import * as geoUtils from './geoUtils.mjs';
-import { DMSR } from '../constants.mjs';
+import * as dateTimeUtils from './dateTimeUtils';
+import * as geoUtils from './geoUtils';
+import { DMSR } from '../constants';
 
 /**
  * Returns the next date/time at which a question should be asked, based

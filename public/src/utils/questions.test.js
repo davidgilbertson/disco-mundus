@@ -1,6 +1,6 @@
 import assert from 'assert';
-import * as questionUtils from './questionUtils.mjs';
-import * as dateTimeUtils from './dateTimeUtils.mjs';
+import * as questionUtils from './questionUtils';
+import * as dateTimeUtils from './dateTimeUtils';
 
 const now = 1000;
 global.Date.now = () => now;

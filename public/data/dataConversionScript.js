@@ -1,13 +1,8 @@
-import { promises as fs } from 'fs';
-
-import simplifyModule from '@turf/simplify'; // a commonJS module
-const simplify = simplifyModule.default;
-
-import areaModule from '@turf/area'; // a commonJS module
-const area = areaModule.default;
-
-import centerModule from '@turf/center'; // a commonJS module
-const center = centerModule.default;
+/* eslint-disable import/no-extraneous-dependencies, no-param-reassign */
+const fs = require('fs').promises;
+const simplify = require('@turf/simplify');
+const area = require('@turf/area');
+const center = require('@turf/center');
 
 (async () => {
   console.time('Converted data in');
@@ -31,7 +26,7 @@ const center = centerModule.default;
   );
 
   // Delete the area prop
-  suburbFeatureCollection.features.map(feature => {
+  suburbFeatureCollection.features.forEach(feature => {
     delete feature.properties.area;
   });
 

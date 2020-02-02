@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-globals */
 const CACHE_NAME = 'Disco Mundus V2';
 
 const filesToCache = [
@@ -5,28 +6,6 @@ const filesToCache = [
   '/index.html', // home page for the installed PWA
   'manifest.webmanifest',
   'data/sydneySuburbs.json',
-
-  // TODO (davidg): these is now broken with parcel. Fix during CRA move
-  // 'favicon.ico',
-  // 'icons/favicon-32x32.png',
-  // 'icons/android-chrome-192x192.png',
-
-  // // CSS
-  // 'src/main.css',
-  //
-  // // Scripts
-  // 'src/app.mjs',
-  // 'src/cabService.mjs',
-  // 'src/constants.mjs',
-  // 'src/index.mjs',
-  // 'src/mapboxManager.mjs',
-  // 'src/questionManager.mjs',
-  // 'src/utils/dataUtils.mjs',
-  // 'src/utils/dateTimeUtils.mjs',
-  // 'src/utils/geoUtils.mjs',
-  // 'src/utils/logUtils.mjs',
-  // 'src/utils/questionUtils.mjs',
-  // 'src/utils/storageUtils.mjs',
 
   // Third party
   'https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.0/mapbox-gl.css',

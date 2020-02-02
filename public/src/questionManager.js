@@ -1,7 +1,7 @@
-import * as cabService from './cabService.mjs';
-import * as dataUtils from './utils/dataUtils.mjs';
-import * as questionUtils from './utils/questionUtils.mjs';
-import { DMSR } from './constants.mjs';
+import * as cabService from './cabService';
+import * as dataUtils from './utils/dataUtils';
+import * as questionUtils from './utils/questionUtils';
+import { DMSR } from './constants';
 
 /**
  * @typedef {number} DateTimeMillis - the date/time in
@@ -121,12 +121,10 @@ export const init = ({ questionFeatureCollection, answerHistory }) => {
 
   if (!state.sessionQueue.size) {
     populateQueueWithNewQuestions();
-  } else {
+  } else if (state.sessionQueue.size > 10) {
     // Later, we'll tell the user they're finished reviewing
     // We only bother if they've got quite a few to do
-    if (state.sessionQueue.size > 10) {
-      state.isSignificantSession = true;
-    }
+    state.isSignificantSession = true;
   }
 
   // TODO (davidg): if there are still none, there's nothing left to learn.
@@ -264,7 +262,7 @@ export const answerQuestion = ({ clickedFeature, clickCoords } = {}) => {
  * @return {{now: number, later: number, unseen: number}}
  */
 export const getPageStats = () => {
-  let now = state.sessionQueue.size;
+  const now = state.sessionQueue.size;
   let unseen = 0;
 
   state.questionFeatures.forEach(feature => {

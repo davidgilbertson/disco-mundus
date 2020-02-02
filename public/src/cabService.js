@@ -1,5 +1,5 @@
-import * as dataUtils from './utils/dataUtils.mjs';
-import * as storageUtils from './utils/storageUtils.mjs';
+import * as dataUtils from './utils/dataUtils';
+import * as storageUtils from './utils/storageUtils';
 
 // const API_URL = 'http://localhost:5001/velantrix/us-central1/api';
 const API_URL = 'https://us-central1-velantrix.cloudfunctions.net/api';
@@ -150,14 +150,14 @@ export const loadAnswerHistory = async () => {
       lsAnswerHistory.set(response.data);
 
       return response.data;
-    } else {
-      console.error('Seems like that was a bad ID.', response.error);
-
-      return await createNew();
     }
+
+    console.error('Seems like that was a bad ID.', response.error);
+
+    return createNew();
   }
 
-  return await createNew();
+  return createNew();
 };
 
 /**
