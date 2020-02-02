@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "parcel ./public/index.html",
+    "serve": "ws --http2 --compress --directory ./dist",
     "build": "parcel build ./public/index.html",
     "test": "node ./public/runTests.mjs",
     "lint": "eslint public --fix --cache --ext .mjs",
@@ -32,6 +33,7 @@
     "eslint-plugin-react-hooks": "^1.7.0",
     "firebase-tools": "^7.11.0",
     "glob": "latest",
+    "local-web-server": "^3.0.7",
     "parcel-bundler": "^1.12.4",
     "prettier": "1.19.1"
   },
