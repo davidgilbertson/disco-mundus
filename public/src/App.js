@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import { collect } from 'react-recollect';
 import mapboxgl from 'mapbox-gl';
 import * as cabService from './cabService';
 import * as mapboxManager from './mapboxManager';
@@ -8,24 +10,13 @@ import * as logUtils from './utils/logUtils';
 import * as questionUtils from './utils/questionUtils';
 
 class App extends React.PureComponent {
-  state = {
-    isReady: false,
-    showNoIdeaButton: false,
-    showNextButton: false,
-    currentQuestion: null,
-    statsText: null,
-    isAwaitingAnswer: false,
-    answerText: null,
-  };
-
   handleResponse = ({ clickedFeature, clickCoords } = {}) => {
-    if (!this.state.isAwaitingAnswer) return;
+    const { store } = this.props;
+    if (!store.isAwaitingAnswer) return;
 
-    this.setState({
-      isAwaitingAnswer: false,
-      showNoIdeaButton: false,
-      showNextButton: true,
-    });
+    store.showNoIdeaButton = false;
+    store.showNextButton = true;
+    store.isAwaitingAnswer = false;
 
     const { score, nextAskDate } = questionManager.answerQuestion({
       clickCoords,
@@ -63,23 +54,20 @@ class App extends React.PureComponent {
       });
     }
 
-    this.setState({
-      nextDuration: questionUtils.getDateTimeAsWords(nextAskDate),
-      answerText,
-      statsText: questionManager.getPageStats(),
-      currentQuestion: null,
-    });
+    store.statsText = questionManager.getPageStats();
+    store.currentQuestion = null;
+    store.answerText = answerText;
+    store.nextDuration = questionUtils.getDateTimeAsWords(nextAskDate);
   };
 
   askNextQuestion = () => {
-    this.setState({
-      isAwaitingAnswer: true,
-      answerText: null,
-      nextDuration: null,
-      currentQuestion: questionManager.getNextQuestion(),
-      showNoIdeaButton: true,
-      showNextButton: false,
-    });
+    const { store } = this.props;
+    store.showNoIdeaButton = true;
+    store.isAwaitingAnswer = true;
+    store.showNextButton = false;
+    store.answerText = null;
+    store.nextDuration = null;
+    store.currentQuestion = questionManager.getNextQuestion();
 
     mapboxManager.clearStatuses();
     mapboxManager.clearPopups();
@@ -90,6 +78,7 @@ class App extends React.PureComponent {
   };
 
   componentDidMount = async () => {
+    const { store } = this.props;
     // Kick off loading of:
     // * suburb data
     // * history data
@@ -111,10 +100,8 @@ class App extends React.PureComponent {
       answerHistory,
     });
 
-    this.setState({
-      statsText: questionManager.getPageStats(),
-      isReady: true,
-    });
+    store.isReady = true;
+    store.statsText = questionManager.getPageStats();
     this.askNextQuestion();
     logUtils.logTime('App ready');
 
@@ -133,7 +120,7 @@ class App extends React.PureComponent {
     // We want to refresh the stats if the user comes back after a while
     // Particularly on the mobile as an 'installed' app where it doesn't refresh
     window.addEventListener('focus', () => {
-      this.setState({ statsText: questionManager.getPageStats() });
+      store.statsText = questionManager.getPageStats();
     });
 
     // Somewhat dodgy logic to prevent the 'focus' ring on the buttons.
@@ -144,29 +131,27 @@ class App extends React.PureComponent {
   };
 
   render() {
-    const { state } = this;
+    const { store } = this.props;
 
     return (
       <>
-        <div id="map" />
-
-        {state.isReady && (
+        {store.isReady && (
           <div className="question-wrapper">
             <div className="question-name">
-              {!!state.currentQuestion && (
-                <>Where is {state.currentQuestion.properties.name}?</>
+              {!!store.currentQuestion && (
+                <>Where is {store.currentQuestion.properties.name}?</>
               )}
 
-              {state.answerText}
+              {store.answerText}
 
-              {!state.isAwaitingAnswer && (
+              {!store.isAwaitingAnswer && (
                 <div className="answer-text">
-                  Next review {state.nextDuration}
+                  Next review {store.nextDuration}
                 </div>
               )}
             </div>
 
-            {state.showNoIdeaButton && (
+            {store.showNoIdeaButton && (
               <button
                 autoFocus
                 onClick={() => {
@@ -178,11 +163,11 @@ class App extends React.PureComponent {
               </button>
             )}
 
-            {state.showNextButton && (
+            {store.showNextButton && (
               <button
                 autoFocus
                 onClick={() => {
-                  this.setState({ showNextButton: false });
+                  store.showNextButton = false;
                   this.askNextQuestion();
                 }}
               >
@@ -193,13 +178,13 @@ class App extends React.PureComponent {
         )}
 
         <div className="stats">
-          {!!state.statsText && (
+          {!!store.statsText && (
             <>
-              Review now: {state.statsText.now}
+              Review now: {store.statsText.now}
               <span className="stats-spacer">|</span>
-              Review later: {state.statsText.later}
+              Review later: {store.statsText.later}
               <span className="stats-spacer">|</span>
-              Unseen: {state.statsText.unseen}
+              Unseen: {store.statsText.unseen}
             </>
           )}
         </div>
@@ -208,4 +193,21 @@ class App extends React.PureComponent {
   }
 }
 
-export default App;
+App.propTypes = {
+  store: PropTypes.shape({
+    isReady: PropTypes.bool,
+    isAwaitingAnswer: PropTypes.bool,
+    answerText: PropTypes.string,
+    nextDuration: PropTypes.string,
+    showNoIdeaButton: PropTypes.bool,
+    currentQuestion: PropTypes.object,
+    showNextButton: PropTypes.bool,
+    statsText: PropTypes.shape({
+      now: PropTypes.number.isRequired,
+      later: PropTypes.number.isRequired,
+      unseen: PropTypes.number.isRequired,
+    }),
+  }).isRequired,
+};
+
+export default collect(App);
