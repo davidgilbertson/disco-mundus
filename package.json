@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "parcel ./public/index.html",
-    "serve": "ws --http2 --compress --directory ./dist",
     "build": "parcel build ./public/index.html",
-    "test": "node public/runTests.js",
+    "deploy": "npm run build && firebase deploy",
     "lint": "eslint public --fix --cache",
-    "deploy": "npm run build && firebase deploy"
+    "serve": "npm run build && ws --http2 --compress --directory ./dist",
+    "start": "parcel ./public/index.html",
+    "test": "node public/runTests.js"
   },
   "keywords": [],
   "author": "",
