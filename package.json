@@ -35,5 +35,8 @@
   },
   "browserslist": [
     "last 2 Chrome versions"
-  ]
+  ],
+  "dependencies": {
+    "mapbox-gl": "^1.7.0"
+  }
 }

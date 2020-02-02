@@ -2,6 +2,8 @@
  * This file looks after loading the map and any map data, including suburbs.
  * Any logic that interacts with the map goes in here
  */
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAP_LAYERS, FEATURE_STATUS, MAP_SOURCES } from './constants.mjs';
 import * as geoUtils from './utils/geoUtils.mjs';
 import { interpolate, match } from './utils/mapboxLayerHelpers.mjs';
