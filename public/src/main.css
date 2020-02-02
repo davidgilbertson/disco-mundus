@@ -58,13 +58,13 @@ button {
   box-shadow: var(--shadow);
 }
 
-.question-name {
-  margin-bottom: 8px;
-}
-
-.answer-text {
+.next-ask-date {
   margin-top: 4px;
   font-size: 14px;
+}
+
+.button {
+  margin-top: 8px;
 }
 
 .mapboxgl-popup-content {

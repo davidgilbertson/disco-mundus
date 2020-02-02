@@ -9,14 +9,15 @@ import * as geoUtils from './utils/geoUtils';
 import * as logUtils from './utils/logUtils';
 import * as questionUtils from './utils/questionUtils';
 
+const DISPLAY = {
+  QUESTION: 'QUESTION',
+  ANSWER: 'ANSWER',
+};
+
 class App extends React.PureComponent {
   handleResponse = ({ clickedFeature, clickCoords } = {}) => {
     const { store } = this.props;
-    if (!store.isAwaitingAnswer) return;
-
-    store.showNoIdeaButton = false;
-    store.showNextButton = true;
-    store.isAwaitingAnswer = false;
+    if (store.display === DISPLAY.ANSWER) return;
 
     const { score, nextAskDate } = questionManager.answerQuestion({
       clickCoords,
@@ -54,20 +55,19 @@ class App extends React.PureComponent {
       });
     }
 
-    store.statsText = questionManager.getPageStats();
-    store.currentQuestion = null;
-    store.answerText = answerText;
-    store.nextDuration = questionUtils.getDateTimeAsWords(nextAskDate);
+    store.answer = {
+      text: answerText,
+      nextAskDate: questionUtils.getDateTimeAsWords(nextAskDate),
+    };
+
+    store.display = DISPLAY.ANSWER;
   };
 
   askNextQuestion = () => {
     const { store } = this.props;
-    store.showNoIdeaButton = true;
-    store.isAwaitingAnswer = true;
-    store.showNextButton = false;
-    store.answerText = null;
-    store.nextDuration = null;
+
     store.currentQuestion = questionManager.getNextQuestion();
+    store.display = DISPLAY.QUESTION;
 
     mapboxManager.clearStatuses();
     mapboxManager.clearPopups();
@@ -101,7 +101,6 @@ class App extends React.PureComponent {
     });
 
     store.isReady = true;
-    store.statsText = questionManager.getPageStats();
     this.askNextQuestion();
     logUtils.logTime('App ready');
 
@@ -117,12 +116,6 @@ class App extends React.PureComponent {
       }
     });
 
-    // We want to refresh the stats if the user comes back after a while
-    // Particularly on the mobile as an 'installed' app where it doesn't refresh
-    window.addEventListener('focus', () => {
-      store.statsText = questionManager.getPageStats();
-    });
-
     // Somewhat dodgy logic to prevent the 'focus' ring on the buttons.
     // This is a proxy for 'is a keyboard available',
     // since these users are less unlikely to
@@ -133,58 +126,57 @@ class App extends React.PureComponent {
   render() {
     const { store } = this.props;
 
+    const stats = questionManager.getPageStats();
+
     return (
       <>
         {store.isReady && (
           <div className="question-wrapper">
-            <div className="question-name">
-              {!!store.currentQuestion && (
-                <>Where is {store.currentQuestion.properties.name}?</>
-              )}
+            {store.display === DISPLAY.QUESTION && (
+              <>
+                <div>Where is {store.currentQuestion?.properties.name}?</div>
 
-              {store.answerText}
-
-              {!store.isAwaitingAnswer && (
-                <div className="answer-text">
-                  Next review {store.nextDuration}
-                </div>
-              )}
-            </div>
-
-            {store.showNoIdeaButton && (
-              <button
-                autoFocus
-                onClick={() => {
-                  mapboxManager.panTo(questionManager.getCurrentQuestion());
-                  this.handleResponse();
-                }}
-              >
-                No idea
-              </button>
+                <button
+                  className="button"
+                  autoFocus
+                  onClick={() => {
+                    mapboxManager.panTo(questionManager.getCurrentQuestion());
+                    this.handleResponse();
+                  }}
+                >
+                  No idea
+                </button>
+              </>
             )}
 
-            {store.showNextButton && (
-              <button
-                autoFocus
-                onClick={() => {
-                  store.showNextButton = false;
-                  this.askNextQuestion();
-                }}
-              >
-                Next question
-              </button>
+            {store.display === DISPLAY.ANSWER && (
+              <>
+                {store.answer.text}
+
+                <div className="next-ask-date">
+                  Next review {store.answer.nextAskDate}
+                </div>
+
+                <button
+                  className="button"
+                  autoFocus
+                  onClick={this.askNextQuestion}
+                >
+                  Next question
+                </button>
+              </>
             )}
           </div>
         )}
 
         <div className="stats">
-          {!!store.statsText && (
+          {!!stats && (
             <>
-              Review now: {store.statsText.now}
+              Review now: {stats.now}
               <span className="stats-spacer">|</span>
-              Review later: {store.statsText.later}
+              Review later: {stats.later}
               <span className="stats-spacer">|</span>
-              Unseen: {store.statsText.unseen}
+              Unseen: {stats.unseen}
             </>
           )}
         </div>
@@ -196,17 +188,12 @@ class App extends React.PureComponent {
 App.propTypes = {
   store: PropTypes.shape({
     isReady: PropTypes.bool,
-    isAwaitingAnswer: PropTypes.bool,
-    answerText: PropTypes.string,
-    nextDuration: PropTypes.string,
-    showNoIdeaButton: PropTypes.bool,
-    currentQuestion: PropTypes.object,
-    showNextButton: PropTypes.bool,
-    statsText: PropTypes.shape({
-      now: PropTypes.number.isRequired,
-      later: PropTypes.number.isRequired,
-      unseen: PropTypes.number.isRequired,
+    display: PropTypes.oneOf(Object.values(DISPLAY)),
+    answer: PropTypes.shape({
+      text: PropTypes.string,
+      nextAskDate: PropTypes.string,
     }),
+    currentQuestion: PropTypes.object,
   }).isRequired,
 };
 
