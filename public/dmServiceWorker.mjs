@@ -3,11 +3,11 @@ const CACHE_NAME = 'Disco Mundus V2';
 const filesToCache = [
   '/', // home page in a browser
   '/index.html', // home page for the installed PWA
-  'favicon.ico',
   'manifest.webmanifest',
   'data/sydneySuburbs.json',
 
   // TODO (davidg): these is now broken with parcel. Fix during CRA move
+  // 'favicon.ico',
   // 'icons/favicon-32x32.png',
   // 'icons/android-chrome-192x192.png',
 
