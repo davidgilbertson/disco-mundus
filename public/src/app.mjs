@@ -1,139 +1,213 @@
+import React from 'react';
+import mapboxgl from 'mapbox-gl';
 import * as cabService from './cabService.mjs';
-import * as dom from './dom.mjs';
 import * as mapboxManager from './mapboxManager.mjs';
 import * as questionManager from './questionManager.mjs';
 import * as geoUtils from './utils/geoUtils.mjs';
 import * as logUtils from './utils/logUtils.mjs';
 import * as questionUtils from './utils/questionUtils.mjs';
 
-let isAwaitingAnswer = false;
+class App extends React.PureComponent {
+  state = {
+    isReady: false,
+    showNoIdeaButton: false,
+    showNextButton: false,
+    showQuestion: false,
+    currentQuestion: null,
+    statsText: null,
+    isAwaitingAnswer: false,
+    answerText: null,
+  };
 
-const askNextQuestion = () => {
-  isAwaitingAnswer = true;
-  const nextQuestion = questionManager.getNextQuestion();
+  handleResponse = ({ clickedFeature, clickCoords } = {}) => {
+    if (!this.state.isAwaitingAnswer) return;
 
-  mapboxManager.clearStatuses();
-  mapboxManager.clearPopups();
-
-  dom.setQuestionNameInnerHTML(`Where is ${nextQuestion.properties.name}?`);
-
-  dom.hideNextButton();
-  dom.showNoIdeaButton();
-  dom.showQuestionWrapper();
-};
-
-// Update the UI based on the response
-const handleResponse = ({ clickedFeature, clickCoords } = {}) => {
-  if (!isAwaitingAnswer) return;
-
-  isAwaitingAnswer = false;
-  dom.hideNoIdeaButton();
-  dom.showNextButton();
-
-  const { score, nextAskDate } = questionManager.answerQuestion({
-    clickCoords,
-    clickedFeature,
-  });
-
-  let questionText;
-  if (score === 1) {
-    questionText = 'Correct!';
-    mapboxManager.markRight(clickedFeature.id);
-  } else {
-    if (clickedFeature) {
-      mapboxManager.markWrong(clickedFeature.id);
-    }
-
-    if (score === 0) {
-      if (clickedFeature) {
-        questionText = 'Wrong.';
-      } else {
-        questionText = 'Now you know.';
-      }
-    } else if (score < 0.6) {
-      questionText = 'Wrong, but could be wronger.';
-    } else if (score < 0.8) {
-      questionText = 'Wrong, but close.';
-    } else {
-      questionText = 'Wrong, but very close!';
-    }
-
-    const rightAnswer = questionManager.getCurrentQuestion();
-    mapboxManager.markRight(rightAnswer.id);
-    mapboxManager.addPopup({
-      lngLat: geoUtils.getTopPoint(rightAnswer),
-      text: rightAnswer.properties.name,
+    this.setState({
+      isAwaitingAnswer: false,
+      showNoIdeaButton: false,
+      showNextButton: true,
     });
-  }
 
-  const nextDuration = questionUtils.getDateTimeAsWords(nextAskDate);
-  questionText += `
-    <br>
-    <small>
-      Next review ${nextDuration}
-    </small>
-  `;
+    const { score, nextAskDate } = questionManager.answerQuestion({
+      clickCoords,
+      clickedFeature,
+    });
 
-  dom.setQuestionNameInnerHTML(questionText);
+    let answerText;
+    if (score === 1) {
+      answerText = 'Correct!';
+      mapboxManager.markRight(clickedFeature.id);
+    } else {
+      if (clickedFeature) {
+        mapboxManager.markWrong(clickedFeature.id);
+      }
 
-  dom.setStatsText(questionManager.getPageStats());
-};
+      if (score === 0) {
+        if (clickedFeature) {
+          answerText = 'Wrong.';
+        } else {
+          answerText = 'Now you know.';
+        }
+      } else if (score < 0.6) {
+        answerText = 'Wrong, but could be wronger.';
+      } else if (score < 0.8) {
+        answerText = 'Wrong, but close.';
+      } else {
+        answerText = 'Wrong, but very close!';
+      }
 
-dom.onClickNoIdeaButton(() => {
-  mapboxManager.panTo(questionManager.getCurrentQuestion());
-  handleResponse();
-});
+      const rightAnswer = questionManager.getCurrentQuestion();
+      mapboxManager.markRight(rightAnswer.id);
+      mapboxManager.addPopup({
+        lngLat: geoUtils.getTopPoint(rightAnswer),
+        text: rightAnswer.properties.name,
+      });
+    }
 
-dom.onClickNextButton(() => {
-  dom.hideNextButton();
+    this.setState({
+      nextDuration: questionUtils.getDateTimeAsWords(nextAskDate),
+      answerText,
+      statsText: questionManager.getPageStats(),
+      currentQuestion: null,
+    });
+  };
 
-  askNextQuestion();
-});
+  askNextQuestion = () => {
+    this.setState({
+      isAwaitingAnswer: true,
+      answerText: null,
+      nextDuration: null,
+      currentQuestion: questionManager.getNextQuestion(),
+      showNoIdeaButton: true,
+      showNextButton: false,
+    });
 
-// TODO (davidg): might it be faster to get the questions/map first,
-// and start the long CPU process of rendering the question features
-// and THEN go to the network to get the answer history?
-(async () => {
-  // Kick off loading of:
-  // * suburb data
-  // * history data
-  // * the map
-  const [questionFeatureCollection, answerHistory] = await Promise.all([
-    fetch('data/sydneySuburbs.json').then(response => response.json()),
-    cabService.loadAnswerHistory(),
-    mapboxManager.init({ onFeatureClick: handleResponse }),
-  ]);
+    mapboxManager.clearStatuses();
+    mapboxManager.clearPopups();
+  };
 
-  logUtils.logTime('Data and map loaded');
+  handleTouchStart = () => {
+    this.setState({ isTouch: true });
+    window.removeEventListener('touchstart', this.handleTouchStart);
+  };
 
-  // When all three are ready, render the data to
-  // the map and start asking questions
-  mapboxManager.addSuburbsLayer(questionFeatureCollection);
-
-  questionManager.init({
-    questionFeatureCollection,
-    answerHistory,
-  });
-
-  dom.setStatsText(questionManager.getPageStats());
-  askNextQuestion();
-  logUtils.logTime('App ready');
-
-  // Clicking on my house shows stats
-  mapboxManager.onClick(e => {
-    const myHouseBounds = new mapboxgl.LngLatBounds([
-      { lng: 151.07749659127188, lat: -33.82599275017796 },
-      { lng: 151.0783350111576, lat: -33.825089019351836 },
+  componentDidMount = async () => {
+    // Kick off loading of:
+    // * suburb data
+    // * history data
+    // * the map
+    const [questionFeatureCollection, answerHistory] = await Promise.all([
+      fetch('data/sydneySuburbs.json').then(response => response.json()),
+      cabService.loadAnswerHistory(),
+      mapboxManager.init({ onFeatureClick: this.handleResponse }),
     ]);
 
-    if (myHouseBounds.contains(e.lngLat)) {
-      logUtils.getAppInfo().then(window.alert);
-    }
-  });
+    logUtils.logTime('Data and map loaded');
 
-  // We want to refresh the stats if the user comes back after a while
-  // Particularly on the mobile as an 'installed' app where it doesn't refresh
-  window.addEventListener('focus', () => {
-    dom.setStatsText(questionManager.getPageStats());
-  });
-})();
+    // When all three are ready, render the data to
+    // the map and start asking questions
+    mapboxManager.addSuburbsLayer(questionFeatureCollection);
+
+    questionManager.init({
+      questionFeatureCollection,
+      answerHistory,
+    });
+
+    this.setState({
+      statsText: questionManager.getPageStats(),
+      isReady: true,
+    });
+    this.askNextQuestion();
+    logUtils.logTime('App ready');
+
+    // Clicking on my house shows stats
+    mapboxManager.onClick(e => {
+      const myHouseBounds = new mapboxgl.LngLatBounds([
+        { lng: 151.07749659127188, lat: -33.82599275017796 },
+        { lng: 151.0783350111576, lat: -33.825089019351836 },
+      ]);
+
+      if (myHouseBounds.contains(e.lngLat)) {
+        logUtils.getAppInfo().then(window.alert);
+      }
+    });
+
+    // We want to refresh the stats if the user comes back after a while
+    // Particularly on the mobile as an 'installed' app where it doesn't refresh
+    window.addEventListener('focus', () => {
+      this.setState({ statsText: questionManager.getPageStats() });
+    });
+
+    // Somewhat dodgy logic to prevent the 'focus' ring on the buttons.
+    // This is a proxy for 'is a keyboard available',
+    // since these users are less unlikely to
+    // want the enter/space shortcut of going to the next question.
+    window.addEventListener('touchstart', this.handleTouchStart);
+  };
+
+  render() {
+    const { state } = this;
+
+    return (
+      <>
+        <div id="map" />
+
+        {state.isReady && (
+          <div className="question-wrapper">
+            <div className="question-name">
+              {!!state.currentQuestion && (
+                <>Where is {state.currentQuestion.properties.name}?</>
+              )}
+
+              {state.answerText}
+
+              {!state.isAwaitingAnswer && (
+                <div className="answer-text">
+                  Next review {state.nextDuration}
+                </div>
+              )}
+            </div>
+
+            {state.showNoIdeaButton && (
+              <button
+                autoFocus
+                onClick={() => {
+                  mapboxManager.panTo(questionManager.getCurrentQuestion());
+                  this.handleResponse();
+                }}
+              >
+                No idea
+              </button>
+            )}
+
+            {state.showNextButton && (
+              <button
+                autoFocus
+                onClick={() => {
+                  this.setState({ showNextButton: false });
+                  this.askNextQuestion();
+                }}
+              >
+                Next question
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="stats">
+          {!!state.statsText && (
+            <>
+              Review now: {state.statsText.now}
+              <span className="stats-spacer">|</span>
+              Review later: {state.statsText.later}
+              <span className="stats-spacer">|</span>
+              Unseen: {state.statsText.unseen}
+            </>
+          )}
+        </div>
+      </>
+    );
+  }
+}
+
+export default App;

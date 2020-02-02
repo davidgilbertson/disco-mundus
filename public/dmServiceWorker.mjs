@@ -18,7 +18,6 @@ const filesToCache = [
   // 'src/app.mjs',
   // 'src/cabService.mjs',
   // 'src/constants.mjs',
-  // 'src/dom.mjs',
   // 'src/index.mjs',
   // 'src/mapboxManager.mjs',
   // 'src/questionManager.mjs',

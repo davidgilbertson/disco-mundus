@@ -5,6 +5,8 @@ module.exports = {
     node: true,
   },
   extends: [
+    'airbnb',
+    'airbnb/hooks',
     'plugin:prettier/recommended',
   ],
   globals: {
