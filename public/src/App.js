@@ -12,48 +12,50 @@ const App = ({ store }) => {
 
   return (
     <>
-      <div className="question-wrapper">
-        {store.displayPhase === DISPLAY_PHASES.QUESTION && (
-          <>
-            <div>Where is {store.currentQuestion?.properties.name}?</div>
+      {!!store.displayPhase && (
+        <div className="question-wrapper">
+          {store.displayPhase === DISPLAY_PHASES.QUESTION && (
+            <>
+              <div>Where is {store.currentQuestion?.properties.name}?</div>
 
-            <button
-              className="button"
-              autoFocus
-              onClick={() => {
-                mapboxManager.panTo(questionManager.getCurrentQuestion());
-                questionManager.handleUserAction();
-              }}
-            >
-              No idea
-            </button>
-          </>
-        )}
+              <button
+                className="button"
+                autoFocus
+                onClick={() => {
+                  mapboxManager.panTo(questionManager.getCurrentQuestion());
+                  questionManager.handleUserAction();
+                }}
+              >
+                No idea
+              </button>
+            </>
+          )}
 
-        {store.displayPhase === DISPLAY_PHASES.ANSWER && (
-          <>
-            {store.answer.text}
+          {store.displayPhase === DISPLAY_PHASES.ANSWER && (
+            <>
+              {store.answer.text}
 
-            <div className="next-ask-date">
-              Next review {store.answer.nextAskDate}
-            </div>
+              <div className="next-ask-date">
+                Next review {store.answer.nextAskDate}
+              </div>
 
-            <button
-              className="button"
-              autoFocus
-              onClick={() => {
-                mapboxManager.clearStatuses();
-                mapboxManager.clearPopups();
-                questionManager.askNextQuestion();
-              }}
-            >
-              Next question
-            </button>
-          </>
-        )}
-      </div>
+              <button
+                className="button"
+                autoFocus
+                onClick={() => {
+                  mapboxManager.clearStatuses();
+                  mapboxManager.clearPopups();
+                  questionManager.askNextQuestion();
+                }}
+              >
+                Next question
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
-      <div className="stats">
+      <div className="stats-wrapper">
         {!!stats && (
           <>
             Review now: {stats.now}

@@ -14,33 +14,29 @@
     ],
     "headers": [
       {
-        "source": "**/*.mjs",
-        "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/javascript; charset=utf-8"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(png|ico)",
+        "source": "**/*.@(js|ico|png|html|css)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public"
+            "value": "max-age=31536000"
           }
         ]
       },
       {
-        "source": "**/*.@(js|mjs|json|css|webmanifest)",
+        "source": "**/dmServiceWorker.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=0"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(json|webmanifest)",
         "headers": [
           {
             "key": "Cache-Control",
             "value": "no-cache"
-          },
-          {
-            "key": "Last-Modified",
-            "value": "Sat, 01 Jan 2000 00:00:00 GMT"
           }
         ]
       }

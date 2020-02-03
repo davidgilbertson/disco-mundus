@@ -2,16 +2,13 @@
  * This file looks after loading the map and any map data, including suburbs.
  * Any logic that interacts with the map goes in here
  */
-import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAP_LAYERS, FEATURE_STATUS, MAP_SOURCES } from './constants';
 import * as geoUtils from './utils/geoUtils';
 import { interpolate, match } from './utils/mapboxLayerHelpers';
 
-mapboxgl.accessToken =
-  'pk.eyJ1IjoiZGF2aWRnNzA3IiwiYSI6ImNqZWVxaGtnazF2czAyeXFlcDlvY2kwZDQifQ.WSmiQO0ccl85_FvEDTsBmw';
-
 let map;
+let mapboxgl;
 let lastHoveredFeatureId = null;
 const featuresWithStatus = new Map();
 const popups = [];
@@ -170,8 +167,14 @@ export const onClick = cb => {
   map.on('click', cb);
 };
 
-export const init = ({ onFeatureClick }) =>
-  new Promise(resolve => {
+export const init = async ({ onFeatureClick }) => {
+  // We import mapbox to split the bundle
+  mapboxgl = await import('mapbox-gl');
+  // eslint-disable-next-line no-param-reassign
+  mapboxgl.accessToken =
+    'pk.eyJ1IjoiZGF2aWRnNzA3IiwiYSI6ImNqZWVxaGtnazF2czAyeXFlcDlvY2kwZDQifQ.WSmiQO0ccl85_FvEDTsBmw';
+
+  return new Promise(resolve => {
     const SYDNEY_LNG_LAT = {
       lng: 150.95257825424233,
       lat: -33.856237652995084,
@@ -266,3 +269,4 @@ export const init = ({ onFeatureClick }) =>
 
     map.on('load', resolve);
   });
+};

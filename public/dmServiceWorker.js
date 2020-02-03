@@ -6,10 +6,6 @@ const filesToCache = [
   '/index.html', // home page for the installed PWA
   'manifest.webmanifest',
   'data/sydneySuburbs.json',
-
-  // Third party
-  'https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.0/mapbox-gl.css',
-  'https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.0/mapbox-gl.js',
 ];
 
 self.addEventListener('install', e => {
