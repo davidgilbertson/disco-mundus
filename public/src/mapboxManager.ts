@@ -2,7 +2,7 @@
  * This file looks after loading the map and any map data, including places.
  * Any logic that interacts with the map goes in here
  */
-import { Map as MapboxMap, Layer, MapLayerMouseEvent, Popup } from 'mapbox-gl';
+import { Map as MapboxMap, MapLayerMouseEvent, Popup } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { store } from 'react-recollect';
 import { ACCESS_TOKEN, MAP_STYLE } from './constants';
@@ -30,13 +30,7 @@ export const panTo = (feature: QuestionFeature) => {
   state.map.panTo(feature.properties.center);
 };
 
-export const addPopup = ({
-  lngLat,
-  text,
-}: {
-  lngLat: LngLatArray;
-  text: string;
-}) => {
+export const addPopup = (lngLat: LngLatArray, text: string) => {
   state.popups.push(
     new Popup()
       .setLngLat(lngLat)
@@ -70,37 +64,31 @@ export const clearStatuses = (statusToClear?: string) => {
 
 // TODO (davidg): could all this be some amazing connection with the store
 // using afterChange()?
-export const setStatus = ({
-  featureId,
-  status,
-}: {
-  featureId: number;
-  status: FeatureStatus;
-}) => {
+const setStatus = (featureId: number, status: FeatureStatus) => {
   if (!featureId) return;
 
   state.featuresWithStatus.set(featureId, status);
 
   state.map.setFeatureState(
     { source: MapSource.SUBURBS, id: featureId },
-    { status }
+    { status: status }
   );
 };
 
 export const select = (featureId: number) => {
-  setStatus({ featureId, status: FeatureStatus.SELECTED });
+  setStatus(featureId, FeatureStatus.SELECTED);
 };
 
 export const markWrong = (featureId: number) => {
-  setStatus({ featureId, status: FeatureStatus.WRONG });
+  setStatus(featureId, FeatureStatus.WRONG);
 };
 
 export const markRight = (featureId: number) => {
-  setStatus({ featureId, status: FeatureStatus.RIGHT });
+  setStatus(featureId, FeatureStatus.RIGHT);
 };
 
 const hover = (featureId: number) => {
-  setStatus({ featureId, status: FeatureStatus.HOVERED });
+  setStatus(featureId, FeatureStatus.HOVERED);
 };
 
 export const addSuburbsLayer = (
@@ -146,7 +134,7 @@ export const addSuburbsLayer = (
     type: 'fill',
     paint: {
       'fill-color': match({
-        state: 'status', // TODO (davidg): states could be enum
+        state: 'status',
         cases: [
           { if: FeatureStatus.WRONG, then: 'rgba(240, 0, 0, 0.2)' },
           { if: FeatureStatus.RIGHT, then: 'rgba(0, 200, 0, 0.2)' },
@@ -184,7 +172,7 @@ export const addSuburbsLayer = (
   });
 };
 
-export const bindEvents = (handleUserAction: (props: MapTapData) => void) => {
+export const bindEvents = (handlePlaceTap: PlaceTapEventHandler) => {
   state.map.on('mouseenter', MapLayer.LOCATION_HIGHLIGHT_FILL, () => {
     state.map.getCanvas().style.cursor = 'pointer';
   });
@@ -242,16 +230,13 @@ export const bindEvents = (handleUserAction: (props: MapTapData) => void) => {
           const lngLat = geoUtils.getTopPoint(clickedFeature);
 
           if (lngLat) {
-            addPopup({
-              lngLat,
-              text: clickedFeature.properties.name,
-            });
+            addPopup(lngLat, clickedFeature.properties.name);
           }
         }
 
-        handleUserAction({
-          clickCoords: [e.lngLat.lng, e.lngLat.lat],
-          clickedFeature,
+        handlePlaceTap({
+          coords: [e.lngLat.lng, e.lngLat.lat],
+          feature: clickedFeature,
         });
       }
     }
@@ -275,10 +260,7 @@ export const init = async (): Promise<void> =>
       container: 'map',
       style: MAP_STYLE,
       center: SYDNEY_LNG_LAT,
-      zoom: geoUtils.getZoomToFit({
-        kms: SYDNEY_WIDTH_KM,
-        lat: SYDNEY_LNG_LAT.lat,
-      }),
+      zoom: geoUtils.getZoomToFit(SYDNEY_WIDTH_KM, SYDNEY_LNG_LAT.lat),
     });
 
     window.DM_MAP = state.map;

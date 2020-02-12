@@ -7,11 +7,10 @@ import * as logUtils from './utils/logUtils';
 
 const init = async (): Promise<void> => {
   // Initialise the store with defaults
-  store.questionFeatures = new Map();
   // @ts-ignore - will populate this before calling it. Hmmmm.
-  store.currentQuestion = null;
-  store.sessionQueue = new Set();
   store.isSignificantSession = false;
+  store.questionFeatures = new Map();
+  store.sessionQueue = new Set();
   store.sessionStats = {
     WRONG: { name: 'Wrong', count: 0 },
     CLOSE: { name: 'Close', count: 0 },
@@ -41,9 +40,9 @@ const init = async (): Promise<void> => {
   // the map and start asking questions
   mapboxManager.addSuburbsLayer(questionFeatureCollection);
   questionManager.init(questionFeatureCollection, answerHistory);
-  mapboxManager.bindEvents(questionManager.handleUserAction);
+  mapboxManager.bindEvents(questionManager.handlePlaceTap);
 
-  questionManager.askNextQuestion();
+  questionManager.selectNextQuestion();
   logUtils.logTime('App ready');
 
   // Clicking on my house shows stats
@@ -54,7 +53,9 @@ const init = async (): Promise<void> => {
     ]);
 
     if (myHouseBounds.contains(e.lngLat)) {
-      logUtils.getAppInfo().then(window.alert);
+      logUtils.getAppInfo().then((info) => {
+        if (info) window.alert(info);
+      });
     }
   });
 };

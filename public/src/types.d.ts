@@ -1,6 +1,6 @@
 import { Store } from 'react-recollect';
 import * as mapboxgl from 'mapbox-gl';
-import { Feature, FeatureCollection, MultiPolygon, Polygon, } from 'geojson';
+import { Feature, FeatureCollection, MultiPolygon, Polygon } from 'geojson';
 import { DisplayPhase } from './enums';
 
 declare global {
@@ -9,16 +9,18 @@ declare global {
     lastScore: number;
     nextAskDate: number;
     lastAskDate: number;
-  }
+  };
 
   type AnswerHistory = AnswerHistoryItem[];
 
   type LngLatArray = [number, number];
 
-  type MapTapData = {
-    clickCoords: LngLatArray;
-    clickedFeature: QuestionFeature;
+  type PlaceTapEvent = {
+    coords: LngLatArray;
+    feature: QuestionFeature;
   };
+
+  type PlaceTapEventHandler = (e?: PlaceTapEvent) => void;
 
   interface QuestionFeature extends Feature {
     id: number;
@@ -53,15 +55,15 @@ declare global {
 
 declare module 'react-recollect' {
   interface Store {
-    displayPhase: DisplayPhase;
     answer: {
       text: string;
       nextAskDate: string;
     };
-    questionFeatures: Map<number | string, QuestionFeature>;
     currentQuestion: QuestionFeature;
-    sessionQueue: Set<number | string>;
+    displayPhase?: DisplayPhase;
     isSignificantSession: boolean;
+    questionFeatures: Map<number, QuestionFeature>;
+    sessionQueue: Set<number>;
     sessionStats: SessionStats;
   }
 }

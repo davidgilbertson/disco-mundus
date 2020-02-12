@@ -8,13 +8,10 @@ import { DMSR } from '../constants';
  *
  * Details in the README.md
  */
-export const getNextAskDate = ({
-  question,
-  score,
-}: {
-  question: QuestionFeature;
-  score: number;
-}): number => {
+export const getNextAskDate = (
+  question: QuestionFeature,
+  score: number
+) => {
   if (score < 0 || score > 1 || typeof score === 'undefined') {
     throw Error('Score must be between 0 and 1');
   }
@@ -42,19 +39,15 @@ export const getNextAskDate = ({
 /**
  * Converts the relative location of two polygons to a score
  */
-export const calculateAnswerScore = ({
-  clickCoords,
-  correctQuestionFeature,
-  clickedQuestionFeature,
-}: {
-  clickCoords: LngLatArray;
-  correctQuestionFeature: QuestionFeature;
-  clickedQuestionFeature: QuestionFeature;
-}): number => {
+export const calculateAnswerScore = (
+  clickedQuestionFeature: QuestionFeature,
+  correctQuestionFeature: QuestionFeature,
+  clickCoords: LngLatArray
+) => {
   // Note, it would be nice to test if two features share a point,
   // but features can be thousands
   // of points, so millions of combinations.
-  if (geoUtils.areNeighbors(correctQuestionFeature, clickedQuestionFeature)) {
+  if (geoUtils.areNeighbors(clickedQuestionFeature, correctQuestionFeature)) {
     return DMSR.SCORE_FOR_NEIGHBOR;
   }
 
@@ -78,7 +71,7 @@ export const getReviewCutoff = () =>
 /**
  * Converts a date/time into a readable string
  */
-export const getDateTimeAsWords = (dateTime: number): string => {
+export const getDateTimeAsWords = (dateTime: number) => {
   if (dateTime < getReviewCutoff()) return 'soon';
 
   const millis = dateTime - Date.now();

@@ -1,13 +1,11 @@
-export const getTopPoint = (
-  polygon: QuestionFeature
-): LngLatArray | undefined => {
+export const getTopPoint = (polygon: QuestionFeature): LngLatArray => {
   if (polygon.geometry.coordinates[0][0].length !== 2) {
-    return undefined;
+    return [0, 0]; // Weird, but should be impossible
   }
 
   const points: LngLatArray[] = polygon.geometry.coordinates.flat();
 
-  if (!points.length) return;
+  if (!points.length) return [0, 0];
 
   let topPoint = points[0];
 
@@ -26,7 +24,7 @@ export const getTopPoint = (
 export const areNeighbors = (
   polygon1: QuestionFeature,
   polygon2: QuestionFeature
-): boolean => {
+) => {
   const coords1Arr = polygon1.geometry.coordinates
     .flat()
     .map((item) => `${item[0]}-${item[1]}`);
@@ -40,10 +38,7 @@ export const areNeighbors = (
   return coords1Arr.some((coord1AsString) => coords2Set.has(coord1AsString));
 };
 
-export const distanceBetween = (
-  point1: LngLatArray,
-  point2: LngLatArray
-): number => {
+export const distanceBetween = (point1: LngLatArray, point2: LngLatArray) => {
   const CIRCUMFERENCE = 40000000;
 
   const lngDiff = Math.abs(point2[0] - point1[0]);
@@ -55,22 +50,12 @@ export const distanceBetween = (
   return Math.sqrt(latDiffMeters ** 2 + lngDiffMeters ** 2);
 };
 
-type GetZoomToFitProps = {
-  kms: number;
-  pixels?: number;
-  lat?: number;
-};
-
 /**
  * Get the appropriate zoom level to fit a certain number of kms on a
  * certain sized screen. Like 'zoom to fit' but can be used for the initial
  * rendering of the map.
  */
-export const getZoomToFit = ({
-  kms,
-  pixels = window.innerWidth,
-  lat = 0,
-}: GetZoomToFitProps): number => {
+export const getZoomToFit = (kms: number, lat: number = 0) => {
   // This is based on what I could find here:
   // https://docs.mapbox.com/help/glossary/zoom-level
 
@@ -78,5 +63,5 @@ export const getZoomToFit = ({
   const kpp = 78.271484 * Math.cos(Math.PI * (lat / 180));
 
   // Work out the correct zoom to fit the given kms
-  return Math.log2(kpp / (kms / pixels));
+  return Math.log2(kpp / (kms / window.innerWidth));
 };

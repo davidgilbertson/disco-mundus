@@ -7,26 +7,20 @@ import * as questionUtils from './utils/questionUtils';
 import { DMSR } from './constants';
 import { DisplayPhase } from './enums';
 
-// TODO (davidg): just update this where I work the score out?
-const updateSessionStats = (score: number) => {
-  if (score === 0) {
-    store.sessionStats.WRONG.count++;
-  } else if (score < 1) {
-    store.sessionStats.CLOSE.count++;
-  } else {
-    store.sessionStats.RIGHT.count++;
-  }
-};
-
 const populateQueueWithNewQuestions = () => {
-  const arrayClone = Array.from(store.questionFeatures.values());
+  const questionFeatures = Array.from(store.questionFeatures.values());
 
   // TODO (davidg): this should also get questions with nextAskDate <
   //  the threshold.
   // Get a random selection of questions
-  while (store.sessionQueue.size < DMSR.SESSION_SIZE && arrayClone.length) {
-    const randomIndex = Math.round(Math.random() * (arrayClone.length - 1));
-    const feature = arrayClone.splice(randomIndex, 1)[0];
+  while (
+    store.sessionQueue.size < DMSR.SESSION_SIZE &&
+    questionFeatures.length
+  ) {
+    const randomIndex = Math.round(
+      Math.random() * (questionFeatures.length - 1)
+    );
+    const feature = questionFeatures.splice(randomIndex, 1)[0];
 
     if (!feature.properties.nextAskDate) {
       store.sessionQueue.add(feature.id);
@@ -85,21 +79,25 @@ export const init = (
  * Update the local question set and save the results to the database
  */
 const updateAnswerHistory = (score: number, nextAskDate: number) => {
-  // For the first answer each session record the score in session stats
+  // For the first answer each session, we record the score in session stats
   if (!store.currentQuestion.properties.answeredThisSession) {
-    updateSessionStats(score);
+    if (score === 0) {
+      store.sessionStats.WRONG.count++;
+    } else if (score < 1) {
+      store.sessionStats.CLOSE.count++;
+    } else {
+      store.sessionStats.RIGHT.count++;
+    }
   }
-
-  const newProps = {
-    lastAskDate: Date.now(),
-    lastScore: score,
-    nextAskDate,
-    answeredThisSession: true, // this is never saved
-  };
 
   const newQuestionFeature = dataUtils.updateFeatureProps(
     store.currentQuestion,
-    newProps
+    {
+      lastAskDate: Date.now(),
+      lastScore: score,
+      nextAskDate,
+      answeredThisSession: true, // this is never saved
+    }
   );
 
   store.questionFeatures.set(store.currentQuestion.id, newQuestionFeature);
@@ -135,14 +133,17 @@ const updateAnswerHistory = (score: number, nextAskDate: number) => {
   }
 };
 
-// TODO (davidg): is this really 'selectNextQuestion'?
-export const askNextQuestion = () => {
+export const selectNextQuestion = () => {
   // Start with the first one.
-  let firstQuestionId: number = store.sessionQueue.values().next().value;
+  const firstQuestionId: number = store.sessionQueue.values().next().value;
   let nextReviewQuestion = store.questionFeatures.get(firstQuestionId);
 
-  // TODO (davidg): handle no more questions.
-  if (!nextReviewQuestion) return;
+  if (!nextReviewQuestion) {
+    // TODO (davidg): allow learning ahead
+    store.displayPhase = DisplayPhase.NO_QUESTIONS;
+
+    return;
+  }
 
   // It is assumed that if a question in the queue, it's ready to be asked
   store.sessionQueue.forEach((questionId) => {
@@ -166,49 +167,50 @@ export const askNextQuestion = () => {
 /**
  * Could be called when the user clicks the map or clicks the 'No idea' button
  */
-export const handleUserAction = (
-  { clickCoords, clickedFeature }: MapTapData = {} as MapTapData
+export const handlePlaceTap: PlaceTapEventHandler = (
+  e = {} as PlaceTapEvent
 ) => {
   if (store.displayPhase === DisplayPhase.ANSWER) return;
 
-  let score; // from 0 to 1
+  let score: number; // from 0 to 1
 
-  if (!clickedFeature) {
+  if (!e.feature) {
     // No answer attempted
     score = 0;
   } else if (
-    clickedFeature.properties.name === store.currentQuestion.properties.name
+    e.feature.properties.name === store.currentQuestion.properties.name
   ) {
     // Answer is exactly correct
     score = 1;
   } else {
     // Base the score on how close the guess was
-    score = questionUtils.calculateAnswerScore({
-      clickCoords,
-      correctQuestionFeature: store.currentQuestion,
-      clickedQuestionFeature: clickedFeature,
-    });
+    score = questionUtils.calculateAnswerScore(
+      e.feature,
+      store.currentQuestion,
+      e.coords
+    );
   }
 
-  const nextAskDate = questionUtils.getNextAskDate({
-    question: store.currentQuestion,
-    score,
-  });
+  const nextAskDate = questionUtils.getNextAskDate(
+    store.currentQuestion,
+    score
+  );
 
   updateAnswerHistory(score, nextAskDate);
 
-  let answerText;
+  let answerText: string;
+
   if (score === 1) {
     answerText = 'Correct!';
     // TODO (davidg): I don't love that this module talks directly to the map
-    mapboxManager.markRight(clickedFeature.id);
+    mapboxManager.markRight(e.feature.id);
   } else {
-    if (clickedFeature) {
-      mapboxManager.markWrong(clickedFeature.id);
+    if (e.feature) {
+      mapboxManager.markWrong(e.feature.id);
     }
 
     if (score === 0) {
-      if (clickedFeature) {
+      if (e.feature) {
         answerText = 'Wrong.';
       } else {
         answerText = 'Now you know.';
@@ -226,10 +228,7 @@ export const handleUserAction = (
     const lngLat = geoUtils.getTopPoint(store.currentQuestion);
 
     if (lngLat) {
-      mapboxManager.addPopup({
-        lngLat,
-        text: store.currentQuestion.properties.name,
-      });
+      mapboxManager.addPopup(lngLat, store.currentQuestion.properties.name);
     }
   }
 

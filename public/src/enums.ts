@@ -18,4 +18,5 @@ export const enum FeatureStatus {
 export const enum DisplayPhase {
   QUESTION = 'QUESTION',
   ANSWER = 'ANSWER',
+  NO_QUESTIONS = 'NO_QUESTIONS',
 }

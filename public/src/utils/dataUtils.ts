@@ -20,7 +20,7 @@ export const upsert = <T extends { id: any }>(array: T[], newItem: T): T[] => {
 
 export const updateFeatureProps = (
   feature: QuestionFeature,
-  props: object
+  props: Partial<QuestionFeature['properties']>
 ): QuestionFeature => ({
   ...feature,
   properties: { ...feature.properties, ...props },

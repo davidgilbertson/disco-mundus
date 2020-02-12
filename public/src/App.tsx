@@ -22,7 +22,7 @@ const App = ({ store }: { store: Store }) => {
                 autoFocus
                 onClick={() => {
                   mapboxManager.panTo(store.currentQuestion);
-                  questionManager.handleUserAction();
+                  questionManager.handlePlaceTap();
                 }}
               >
                 No idea
@@ -44,12 +44,16 @@ const App = ({ store }: { store: Store }) => {
                 onClick={() => {
                   mapboxManager.clearStatuses();
                   mapboxManager.clearPopups();
-                  questionManager.askNextQuestion();
+                  questionManager.selectNextQuestion();
                 }}
               >
                 Next question
               </button>
             </>
+          )}
+
+          {store.displayPhase === DisplayPhase.NO_QUESTIONS && (
+            <div>No more questions</div>
           )}
         </div>
       )}
