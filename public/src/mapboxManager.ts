@@ -10,6 +10,7 @@ import * as geoUtils from './utils/geoUtils';
 import { interpolate, match } from './utils/mapboxLayerHelpers';
 import { FeatureStatus, MapLayer, MapSource } from './enums';
 
+// TODO (davidg): how to lazy load mapbox-gl, but still use the MapboxMap type?
 type MapboxManagerState = {
   map: MapboxMap;
   lastHoveredFeatureId?: number;
@@ -49,7 +50,7 @@ export const clearStatus = (featureId: number) => {
   state.featuresWithStatus.delete(featureId);
 
   state.map.removeFeatureState({
-    source: MapSource.SUBURBS,
+    source: MapSource.PLACES,
     id: featureId,
   });
 };
@@ -70,8 +71,8 @@ const setStatus = (featureId: number, status: FeatureStatus) => {
   state.featuresWithStatus.set(featureId, status);
 
   state.map.setFeatureState(
-    { source: MapSource.SUBURBS, id: featureId },
-    { status: status }
+    { source: MapSource.PLACES, id: featureId },
+    { status }
   );
 };
 
@@ -91,18 +92,16 @@ const hover = (featureId: number) => {
   setStatus(featureId, FeatureStatus.HOVERED);
 };
 
-export const addSuburbsLayer = (
-  suburbsFeatureCollection: QuestionFeatureCollection
-) => {
-  state.map.addSource(MapSource.SUBURBS, {
+export const addMapData = (data: QuestionFeatureCollection) => {
+  state.map.addSource(MapSource.PLACES, {
     type: 'geojson',
-    data: suburbsFeatureCollection,
+    data,
   });
 
   state.map.addLayer(
     {
       id: MapLayer.LOCATION_BORDERS,
-      source: MapSource.SUBURBS,
+      source: MapSource.PLACES,
       type: 'line',
       paint: {
         'line-color': interpolate({
@@ -130,7 +129,7 @@ export const addSuburbsLayer = (
   // The highlight state layers go on top of everything
   state.map.addLayer({
     id: MapLayer.LOCATION_HIGHLIGHT_FILL,
-    source: MapSource.SUBURBS,
+    source: MapSource.PLACES,
     type: 'fill',
     paint: {
       'fill-color': match({
@@ -147,7 +146,7 @@ export const addSuburbsLayer = (
 
   state.map.addLayer({
     id: MapLayer.LOCATION_HIGHLIGHT_LINE,
-    source: MapSource.SUBURBS,
+    source: MapSource.PLACES,
     type: 'line',
     paint: {
       'line-color': match({

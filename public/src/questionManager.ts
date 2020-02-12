@@ -43,9 +43,8 @@ export const init = (
   const reviewCutoff = questionUtils.getReviewCutoff();
 
   questionFeatureCollection.features.forEach((feature) => {
-    const matchingHistoryItem: AnswerHistoryItem = (answerHistoryMap.get(
-      feature.id
-    ) || {}) as AnswerHistoryItem;
+    const matchingHistoryItem: AnswerHistoryItem =
+      answerHistoryMap.get(feature.id) || <AnswerHistoryItem>{};
 
     if (
       matchingHistoryItem.nextAskDate &&
@@ -145,7 +144,7 @@ export const selectNextQuestion = () => {
     return;
   }
 
-  // It is assumed that if a question in the queue, it's ready to be asked
+  // It is assumed that if a question's in the queue, it's ready to be asked
   store.sessionQueue.forEach((questionId) => {
     const question = store.questionFeatures.get(questionId);
     if (!question) return;
@@ -167,9 +166,7 @@ export const selectNextQuestion = () => {
 /**
  * Could be called when the user clicks the map or clicks the 'No idea' button
  */
-export const handlePlaceTap: PlaceTapEventHandler = (
-  e = {} as PlaceTapEvent
-) => {
+export const handlePlaceTap: PlaceTapEventHandler = (e = <PlaceTapEvent>{}) => {
   if (store.displayPhase === DisplayPhase.ANSWER) return;
 
   let score: number; // from 0 to 1
@@ -215,9 +212,9 @@ export const handlePlaceTap: PlaceTapEventHandler = (
       } else {
         answerText = 'Now you know.';
       }
-    } else if (score < 0.6) {
+    } else if (score < 0.2) {
       answerText = 'Wrong, but could be wronger.';
-    } else if (score < 0.8) {
+    } else if (score < 0.5) {
       answerText = 'Wrong, but close.';
     } else {
       answerText = 'Wrong, but very close!';

@@ -5,7 +5,7 @@ export const enum MapLayer {
 }
 
 export const enum MapSource {
-  SUBURBS = 'SUBURBS',
+  PLACES = 'PLACES',
 }
 
 export const enum FeatureStatus {

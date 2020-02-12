@@ -22,22 +22,24 @@ declare global {
 
   type PlaceTapEventHandler = (e?: PlaceTapEvent) => void;
 
-  interface QuestionFeature extends Feature {
+  // We add properties and narrow down the allowed geometries of Feature
+  type QuestionFeature = Omit<Feature, 'geometry'> & {
     id: number;
     properties: {
       answeredThisSession: boolean;
-      center: [number, number];
+      center: LngLatArray;
       lastAskDate: number;
       lastScore: number;
       name: string;
       nextAskDate: number;
     };
     geometry: Polygon | MultiPolygon;
-  }
+  };
 
-  interface QuestionFeatureCollection extends FeatureCollection {
+  // Replace the features type of FeatureCollection
+  type QuestionFeatureCollection = Omit<FeatureCollection, 'features'> & {
     features: QuestionFeature[];
-  }
+  };
 
   type SessionStat = {
     name: string;

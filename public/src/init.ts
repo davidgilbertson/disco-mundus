@@ -7,7 +7,6 @@ import * as logUtils from './utils/logUtils';
 
 const init = async (): Promise<void> => {
   // Initialise the store with defaults
-  // @ts-ignore - will populate this before calling it. Hmmmm.
   store.isSignificantSession = false;
   store.questionFeatures = new Map();
   store.sessionQueue = new Set();
@@ -23,7 +22,6 @@ const init = async (): Promise<void> => {
   // * place data
   // * history data
   // * the map
-  // TODO (davidg): lazy load mapboxManager, does this split out mapbox?
   const [questionFeatureCollection, answerHistory] = await Promise.all<
     QuestionFeatureCollection,
     AnswerHistory,
@@ -38,7 +36,7 @@ const init = async (): Promise<void> => {
 
   // When all three are ready, render the data to
   // the map and start asking questions
-  mapboxManager.addSuburbsLayer(questionFeatureCollection);
+  mapboxManager.addMapData(questionFeatureCollection);
   questionManager.init(questionFeatureCollection, answerHistory);
   mapboxManager.bindEvents(questionManager.handlePlaceTap);
 

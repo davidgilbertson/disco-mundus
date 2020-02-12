@@ -56,15 +56,10 @@ module.exports = {
     '@typescript-eslint/ban-ts-ignore': 'off',
     'react/prop-types': 'off',
 
-    /**
-     * @description rules of eslint-plugin-react-hooks
-     */
-    // 'react-hooks/rules-of-hooks': 'error',
     // My preferences
     'no-alert': 'off',
     'no-plusplus': 'off',
     'react/jsx-filename-extension': 'off',
-    // 'react/jsx-filename-extension': ['error', { extensions: ['.ts, .tsx'] }],
     'react/state-in-constructor': 'off',
     'react/destructuring-assignment': 'off',
     'jsx-a11y/no-autofocus': 'off',
