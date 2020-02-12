@@ -7,13 +7,14 @@ import { DMSR } from '../constants';
  * on the last time it was asked and the score it was given this time.
  *
  * Details in the README.md
- *
- * @param {object} props
- * @param {QuestionFeature} props.question
- * @param {number} props.score - between 0 and 1
- * @return {DateTimeMillis} nextAskDate - when the question should next be asked
  */
-export const getNextAskDate = ({ question, score }) => {
+export const getNextAskDate = ({
+  question,
+  score,
+}: {
+  question: QuestionFeature;
+  score: number;
+}): number => {
   if (score < 0 || score > 1 || typeof score === 'undefined') {
     throw Error('Score must be between 0 and 1');
   }
@@ -40,18 +41,16 @@ export const getNextAskDate = ({ question, score }) => {
 
 /**
  * Converts the relative location of two polygons to a score
- *
- * @param {object} props
- * @param {Coords} props.clickCoords
- * @param {QuestionFeature} correctQuestionFeature
- * @param {QuestionFeature} clickedQuestionFeature
- * @return {number} a score between 0 and 1;
  */
 export const calculateAnswerScore = ({
   clickCoords,
   correctQuestionFeature,
   clickedQuestionFeature,
-}) => {
+}: {
+  clickCoords: LngLatArray;
+  correctQuestionFeature: QuestionFeature;
+  clickedQuestionFeature: QuestionFeature;
+}): number => {
   // Note, it would be nice to test if two features share a point,
   // but features can be thousands
   // of points, so millions of combinations.
@@ -64,8 +63,12 @@ export const calculateAnswerScore = ({
     clickCoords
   );
 
+  // You can get some score (up to half the multiplier) for being close.
+  // Note that a score of
   return (
-    (DMSR.CLOSE_M - Math.min(answerDistanceKms, DMSR.CLOSE_M)) / DMSR.CLOSE_M
+    (DMSR.CLOSE_M - Math.min(answerDistanceKms, DMSR.CLOSE_M)) /
+    DMSR.CLOSE_M /
+    DMSR.MULTIPLIER
   );
 };
 
@@ -74,11 +77,8 @@ export const getReviewCutoff = () =>
 
 /**
  * Converts a date/time into a readable string
- *
- * @param {DateTimeMillis} dateTime - a time, presumably in the future
- * @return {string}
  */
-export const getDateTimeAsWords = dateTime => {
+export const getDateTimeAsWords = (dateTime: number): string => {
   if (dateTime < getReviewCutoff()) return 'soon';
 
   const millis = dateTime - Date.now();
@@ -110,15 +110,15 @@ export const getDateTimeAsWords = dateTime => {
   return `in ${years} years`;
 };
 
-export const getSessionStatsAsString = sessionStats => {
-  const finalMessage = [];
+export const getSessionStatsAsString = (sessionStats: SessionStats) => {
+  const finalMessage: string[] = [];
 
   const total = Object.values(sessionStats).reduce(
     (acc, item) => acc + item.count,
     0
   );
 
-  Object.values(sessionStats).forEach(scoreBracket => {
+  Object.values(sessionStats).forEach((scoreBracket) => {
     const percent = Math.round((scoreBracket.count / total) * 100);
 
     const message = `${scoreBracket.name}: ${percent}% (${scoreBracket.count})`;

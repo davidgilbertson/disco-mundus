@@ -7,11 +7,11 @@ logUtils.logTime('Executing JavaScript');
 
 init();
 
-// TODO (davidg): split out React, I'd need to do it in App.js (too?)
+// TODO (davidg): split out React, I'd need to do it in App.tsx (too?)
 import('react-dom').then(({ render }) => {
   render(<App />, document.getElementById('app'));
 });
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/dmServiceWorker.js').catch(console.error);
+  navigator.serviceWorker.register('/dmServiceWorker.ts').catch(console.error);
 }

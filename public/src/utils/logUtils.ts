@@ -1,5 +1,5 @@
 // TODO (davidg): Proxy for this thing
-export const logTime = msg => {
+export const logTime = (msg: string) => {
   console.info(msg, Math.round(performance.now()));
 };
 

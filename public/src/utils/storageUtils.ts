@@ -1,5 +1,6 @@
-export const get = key => {
+export const get = (key: string) => {
   const data = localStorage.getItem(key);
+  if (!data) return data;
 
   try {
     return JSON.parse(data);
@@ -10,7 +11,7 @@ export const get = key => {
   }
 };
 
-export const set = (key, data) => {
+export const set = (key: string, data: any) => {
   try {
     const string = typeof data === 'string' ? data : JSON.stringify(data);
 

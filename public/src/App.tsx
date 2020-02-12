@@ -1,11 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { collect } from 'react-recollect';
-import { DISPLAY_PHASES } from './constants';
+import { collect, Store } from 'react-recollect';
 import * as mapboxManager from './mapboxManager';
 import * as questionManager from './questionManager';
+import { DisplayPhase } from './enums';
 
-const App = ({ store }) => {
+const App = ({ store }: { store: Store }) => {
   if (!store.displayPhase) return null;
 
   const stats = questionManager.getPageStats();
@@ -14,15 +13,15 @@ const App = ({ store }) => {
     <>
       {!!store.displayPhase && (
         <div className="question-wrapper">
-          {store.displayPhase === DISPLAY_PHASES.QUESTION && (
+          {store.displayPhase === DisplayPhase.QUESTION && (
             <>
-              <div>Where is {store.currentQuestion?.properties.name}?</div>
+              <div>Where is {store.currentQuestion?.properties.name} ?</div>
 
               <button
                 className="button"
                 autoFocus
                 onClick={() => {
-                  mapboxManager.panTo(questionManager.getCurrentQuestion());
+                  mapboxManager.panTo(store.currentQuestion);
                   questionManager.handleUserAction();
                 }}
               >
@@ -31,7 +30,7 @@ const App = ({ store }) => {
             </>
           )}
 
-          {store.displayPhase === DISPLAY_PHASES.ANSWER && (
+          {store.displayPhase === DisplayPhase.ANSWER && (
             <>
               {store.answer.text}
 
@@ -68,17 +67,6 @@ const App = ({ store }) => {
       </div>
     </>
   );
-};
-
-App.propTypes = {
-  store: PropTypes.shape({
-    displayPhase: PropTypes.oneOf(Object.values(DISPLAY_PHASES)),
-    answer: PropTypes.shape({
-      text: PropTypes.string,
-      nextAskDate: PropTypes.string,
-    }),
-    currentQuestion: PropTypes.object,
-  }).isRequired,
 };
 
 export default collect(App);
