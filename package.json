@@ -5,7 +5,7 @@
   "scripts": {
     "build": "parcel build ./public/index.html",
     "deploy": "npm run build && firebase deploy",
-    "lint": "eslint public --fix --cache",
+    "lint": "eslint public --fix --cache --ext .js,.ts,.tsx",
     "serve": "npm run build && ws --http2 --compress --directory ./dist",
     "start": "parcel ./public/index.html",
     "test": "node public/runTests.js"
@@ -13,15 +13,20 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "mapbox-gl": "^1.7.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-recollect": "^3.1.2"
+  },
   "devDependencies": {
-    "@babel/core": "^7.8.4",
-    "@babel/plugin-proposal-class-properties": "^7.8.3",
-    "@turf/area": "^6.0.1",
-    "@turf/center": "^6.0.1",
-    "@turf/clean-coords": "^6.0.1",
-    "@turf/simplify": "^5.1.5",
-    "@turf/truncate": "^6.0.1",
-    "babel-eslint": "^10.0.3",
+    "@turf/turf": "^5.1.6",
+    "@types/geojson": "^7946.0.7",
+    "@types/mapbox-gl": "^1.7.0",
+    "@types/react": "^16.9.19",
+    "@types/react-dom": "^16.9.5",
+    "@typescript-eslint/eslint-plugin": "^2.18.0",
+    "@typescript-eslint/parser": "^2.18.0",
     "eslint": "^6.1.0",
     "eslint-config-airbnb": "^18.0.1",
     "eslint-config-prettier": "^6.9.0",
@@ -34,21 +39,16 @@
     "glob": "latest",
     "local-web-server": "^3.0.7",
     "parcel-bundler": "^1.12.4",
-    "prettier": "1.19.1"
+    "prettier": "1.19.1",
+    "typescript": "^3.7.5"
   },
   "prettier": {
     "trailingComma": "es5",
     "proseWrap": "always",
+    "arrowParens": "always",
     "singleQuote": true
   },
   "browserslist": [
     "last 2 Chrome versions"
-  ],
-  "dependencies": {
-    "mapbox-gl": "^1.7.0",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "react-recollect": "^3.1.2",
-    "prop-types": "latest"
-  }
+  ]
 }

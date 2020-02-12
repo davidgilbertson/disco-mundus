@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 const CACHE_NAME = 'Disco Mundus V2';
 
 const filesToCache = [
@@ -8,7 +7,7 @@ const filesToCache = [
   'data/sydneySuburbs.json',
 ];
 
-self.addEventListener('install', e => {
+self.addEventListener('install', (e: ExtendableEvent) => {
   e.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
@@ -18,26 +17,18 @@ self.addEventListener('install', e => {
   );
 });
 
-/**
- * @param {string} url
- * @return {string}
- */
-const getCleanUrl = url => {
+const getCleanUrl = (url: string): string => {
   const cleanUrl = new URL(url);
   cleanUrl.search = '';
   return cleanUrl.href;
 };
 
-/**
- * @param {string} href
- * @return {boolean}
- */
-const isCachedUrl = href => {
-  if (filesToCache.find(path => path.includes(href))) return true;
+const isCachedUrl = (href: string): boolean => {
+  if (filesToCache.find((path) => path.includes(href))) return true;
   return href.includes(self.location.origin);
 };
 
-self.addEventListener('fetch', e => {
+self.addEventListener('fetch', (e: FetchEvent) => {
   e.respondWith(
     (async () => {
       const href = getCleanUrl(e.request.url);
@@ -58,7 +49,7 @@ self.addEventListener('fetch', e => {
 
           caches
             .open(CACHE_NAME)
-            .then(cache => cache.put(href, clonedResponse));
+            .then((cache) => cache.put(href, clonedResponse));
         }
 
         return fetchResponse;
@@ -73,8 +64,8 @@ self.addEventListener('fetch', e => {
       const cacheResponse = await caches.match(href);
 
       // Refresh the cache (async) while returning the cached response
-      fetch(e.request).then(fetchResponse => {
-        caches.open(CACHE_NAME).then(cache => cache.put(href, fetchResponse));
+      fetch(e.request).then((fetchResponse) => {
+        caches.open(CACHE_NAME).then((cache) => cache.put(href, fetchResponse));
       });
 
       if (cacheResponse) return cacheResponse;

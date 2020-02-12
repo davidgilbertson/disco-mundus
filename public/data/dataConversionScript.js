@@ -1,36 +1,33 @@
-/* eslint-disable import/no-extraneous-dependencies, no-param-reassign */
+/* eslint-disable no-param-reassign */
+/* eslint-disable @typescript-eslint/no-var-requires */
 const fs = require('fs').promises;
-const simplify = require('@turf/simplify');
-const area = require('@turf/area');
-const center = require('@turf/center');
+const turf = require('@turf/turf');
 
 (async () => {
   console.time('Converted data in');
-  const suburbData = await fs.readFile('./sydneySuburbsOriginal.json', 'utf8');
-  const suburbFeatureCollection = JSON.parse(suburbData);
+  const dataString = await fs.readFile('./sydneySuburbsOriginal.json', 'utf8');
+  const featureCollection = JSON.parse(dataString);
 
-  suburbFeatureCollection.features = suburbFeatureCollection.features.map(
-    feature => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        area: area(feature),
-        center: center(feature).geometry.coordinates,
-      },
-    })
-  );
+  featureCollection.features = featureCollection.features.map((feature) => ({
+    ...feature,
+    properties: {
+      ...feature.properties,
+      area: turf.area(feature),
+      center: turf.center(feature).geometry.coordinates,
+    },
+  }));
 
   // Sort by area, smallest on top
-  suburbFeatureCollection.features.sort(
+  featureCollection.features.sort(
     (a, b) => b.properties.area - a.properties.area
   );
 
   // Delete the area prop
-  suburbFeatureCollection.features.forEach(feature => {
+  featureCollection.features.forEach((feature) => {
     delete feature.properties.area;
   });
 
-  simplify(suburbFeatureCollection, {
+  turf.simplify(featureCollection, {
     tolerance: 0.00001,
     highQuality: true,
     mutate: true,
@@ -38,7 +35,7 @@ const center = require('@turf/center');
 
   await fs.writeFile(
     './sydneySuburbs.json',
-    JSON.stringify(suburbFeatureCollection, null, 2)
+    JSON.stringify(featureCollection, null, 2)
   );
 
   console.timeEnd('Converted data in');
