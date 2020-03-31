@@ -5,6 +5,7 @@ import * as mapboxManager from './mapboxManager';
 import * as questionManager from './questionManager';
 import * as logUtils from './utils/logUtils';
 
+/** @return void */
 const init = async (): Promise<void> => {
   initStore({
     isSignificantSession: false,

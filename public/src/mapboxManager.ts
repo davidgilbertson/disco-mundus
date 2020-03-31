@@ -33,10 +33,7 @@ export const panTo = (feature: QuestionFeature) => {
 
 export const addPopup = (lngLat: LngLatArray, text: string) => {
   state.popups.push(
-    new Popup()
-      .setLngLat(lngLat)
-      .setHTML(text)
-      .addTo(state.map)
+    new Popup().setLngLat(lngLat).setHTML(text).addTo(state.map)
   );
 };
 
