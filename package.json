@@ -18,13 +18,11 @@
     "last 2 Chrome versions"
   ],
   "prettier": {
-    "arrowParens": "always",
-    "singleQuote": true,
-    "trailingComma": "es5"
+    "singleQuote": true
   },
   "dependencies": {
     "geojson": "^0.5.0",
-    "mapbox-gl": "^1.7.0",
+    "mapbox-gl": "^1.9.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-recollect": "^5.2.0"
@@ -36,22 +34,21 @@
     "@types/mapbox-gl": "^1.8.2",
     "@types/react": "^16.9.29",
     "@types/react-dom": "^16.9.5",
-    "@typescript-eslint/eslint-plugin": "^2.18.0",
-    "@typescript-eslint/parser": "^2.18.0",
+    "@typescript-eslint/eslint-plugin": "^2.26.0",
+    "@typescript-eslint/parser": "^2.26.0",
     "eslint": "^6.1.0",
-    "eslint-config-airbnb": "^18.0.1",
     "eslint-config-airbnb-typescript": "^7.2.0",
     "eslint-config-prettier": "^6.10.1",
     "eslint-plugin-import": "^2.20.2",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-prettier": "^3.1.2",
-    "eslint-plugin-react": "^7.14.3",
-    "eslint-plugin-react-hooks": "^1.7.0",
-    "firebase-tools": "^7.11.0",
+    "eslint-plugin-react": "^7.19.0",
+    "eslint-plugin-react-hooks": "^3.0.0",
+    "firebase-tools": "^7.16.2",
     "glob": "latest",
-    "local-web-server": "^3.0.7",
+    "local-web-server": "^4.0.0",
     "parcel-bundler": "^1.12.4",
-    "prettier": "1.19.1",
-    "typescript": "^3.7.5"
+    "prettier": "^2.0.2",
+    "typescript": "^3.8.3"
   }
 }

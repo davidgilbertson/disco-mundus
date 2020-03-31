@@ -8,7 +8,7 @@ const filesToCache = [
   'data/sydneySuburbs.json',
 ];
 
-self.addEventListener('install', (e: ExtendableEvent) => {
+self.addEventListener('install', ((e: ExtendableEvent) => {
   e.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
@@ -16,7 +16,7 @@ self.addEventListener('install', (e: ExtendableEvent) => {
       return cache.addAll(filesToCache);
     })()
   );
-});
+}) as EventListener);
 
 const getCleanUrl = (url: string): string => {
   const cleanUrl = new URL(url);
@@ -29,7 +29,7 @@ const isCachedUrl = (href: string): boolean => {
   return href.includes(self.location.origin);
 };
 
-self.addEventListener('fetch', (e: FetchEvent) => {
+self.addEventListener('fetch', ((e: FetchEvent) => {
   e.respondWith(
     (async () => {
       const href = getCleanUrl(e.request.url);
@@ -77,4 +77,4 @@ self.addEventListener('fetch', (e: FetchEvent) => {
       return fetch(e.request);
     })()
   );
-});
+}) as EventListener);
