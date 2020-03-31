@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-globals */
 const CACHE_NAME = 'Disco Mundus V2';
 
 const filesToCache = [

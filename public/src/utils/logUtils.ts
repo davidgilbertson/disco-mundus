@@ -7,7 +7,7 @@ window.DM_VERSION = 8;
 
 export const getAppInfo = async () => {
   const estimate = await navigator.storage.estimate();
-  if (!estimate || !estimate.usage || !estimate.quota) return;
+  if (!estimate || !estimate.usage || !estimate.quota) return '';
 
   const usage = Math.round(estimate.usage / 1000000);
   const quota = Math.round(estimate.quota / 1000000);

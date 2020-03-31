@@ -20,10 +20,15 @@ module.exports = {
   },
   parser: '@typescript-eslint/parser',
   rules: {
-    'react/prop-types': 'off',
-
-    // My preferences
+    'import/prefer-default-export': 'off',
+    'jsx-a11y/no-autofocus': 'off',
     'no-alert': 'off',
+    'no-console': [
+      'error',
+      {
+        allow: ['info', 'warn', 'error', 'time', 'timeEnd'],
+      },
+    ],
     'no-param-reassign': [
       'error',
       {
@@ -32,16 +37,10 @@ module.exports = {
       },
     ],
     'no-plusplus': 'off',
-    'react/jsx-filename-extension': 'off',
-    'react/state-in-constructor': 'off',
-    'react/destructuring-assignment': 'off',
-    'jsx-a11y/no-autofocus': 'off',
     'react/button-has-type': 'off',
-    'no-console': [
-      'error',
-      {
-        allow: ['info', 'warn', 'error', 'time', 'timeEnd'],
-      },
-    ],
+    'react/destructuring-assignment': 'off',
+    'react/jsx-filename-extension': 'off',
+    'react/prop-types': 'off',
+    'react/state-in-constructor': 'off',
   },
 };
