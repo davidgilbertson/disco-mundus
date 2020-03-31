@@ -8,10 +8,7 @@ import { DMSR } from '../constants';
  *
  * Details in the README.md
  */
-export const getNextAskDate = (
-  question: QuestionFeature,
-  score: number
-) => {
+export const getNextAskDate = (question: QuestionFeature, score: number) => {
   if (score < 0 || score > 1 || typeof score === 'undefined') {
     throw Error('Score must be between 0 and 1');
   }

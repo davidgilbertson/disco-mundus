@@ -1,23 +1,23 @@
 import { LngLatBounds } from 'mapbox-gl';
-import { store } from 'react-recollect';
+import { store, initStore } from 'react-recollect';
 import * as cabService from './cabService';
 import * as mapboxManager from './mapboxManager';
 import * as questionManager from './questionManager';
 import * as logUtils from './utils/logUtils';
 
 const init = async (): Promise<void> => {
-  // Initialise the store with defaults
-  store.isSignificantSession = false;
-  store.questionFeatures = new Map();
-  store.sessionQueue = new Set();
-  store.sessionStats = {
-    WRONG: { name: 'Wrong', count: 0 },
-    CLOSE: { name: 'Close', count: 0 },
-    RIGHT: { name: 'Right', count: 0 },
-  };
+  initStore({
+    isSignificantSession: false,
+    questionFeatures: new Map(),
+    sessionQueue: new Set(),
+    sessionStats: {
+      WRONG: { name: 'Wrong', count: 0 },
+      CLOSE: { name: 'Close', count: 0 },
+      RIGHT: { name: 'Right', count: 0 },
+    },
+  });
 
   window.DM_STORE = store;
-
   // Kick off loading of:
   // * place data
   // * history data

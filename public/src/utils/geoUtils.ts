@@ -55,7 +55,7 @@ export const distanceBetween = (point1: LngLatArray, point2: LngLatArray) => {
  * certain sized screen. Like 'zoom to fit' but can be used for the initial
  * rendering of the map.
  */
-export const getZoomToFit = (kms: number, lat: number = 0) => {
+export const getZoomToFit = (kms: number, lat = 0) => {
   // This is based on what I could find here:
   // https://docs.mapbox.com/help/glossary/zoom-level
 

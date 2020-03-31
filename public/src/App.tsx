@@ -1,13 +1,14 @@
 import React from 'react';
-import { collect, Store } from 'react-recollect';
+import { collect, WithStoreProp } from 'react-recollect';
 import * as mapboxManager from './mapboxManager';
 import * as questionManager from './questionManager';
 import { DisplayPhase } from './enums';
+import { getPageStats } from './selectors/selectors';
 
-const App = ({ store }: { store: Store }) => {
+const App = ({ store }: WithStoreProp) => {
   if (!store.displayPhase) return null;
 
-  const stats = questionManager.getPageStats();
+  const stats = getPageStats(store);
 
   return (
     <>
@@ -15,7 +16,7 @@ const App = ({ store }: { store: Store }) => {
         <div className="question-wrapper">
           {store.displayPhase === DisplayPhase.QUESTION && (
             <>
-              <div>Where is {store.currentQuestion?.properties.name} ?</div>
+              <div>Where is {store.currentQuestion?.properties.name}?</div>
 
               <button
                 className="button"

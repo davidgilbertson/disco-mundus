@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "jsx": "react",
+    "downlevelIteration": true,
     "esModuleInterop": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-    "lib": ["ESNext", "DOM", "webworker"]
+    "jsx": "react",
+    "lib": ["ESNext", "DOM", "webworker", "ES2015.Iterable", "ES2015.Collection"],
+    "noImplicitAny": false,
+    "strictNullChecks": true
   }
 }

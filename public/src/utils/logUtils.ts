@@ -3,7 +3,7 @@ export const logTime = (msg: string) => {
   console.info(msg, Math.round(performance.now()));
 };
 
-window.DM_VERSION = 7;
+window.DM_VERSION = 8;
 
 export const getAppInfo = async () => {
   const estimate = await navigator.storage.estimate();

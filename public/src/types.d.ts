@@ -1,6 +1,6 @@
 import { Store } from 'react-recollect';
-import * as mapboxgl from 'mapbox-gl';
 import { Feature, FeatureCollection, MultiPolygon, Polygon } from 'geojson';
+import * as mapboxgl from 'mapbox-gl';
 import { DisplayPhase } from './enums';
 
 declare global {

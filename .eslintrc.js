@@ -6,12 +6,9 @@ module.exports = {
   },
   plugins: ['@typescript-eslint'],
   extends: [
-    'airbnb',
-    'airbnb/hooks',
-    'plugin:import/typescript',
-    'plugin:@typescript-eslint/recommended',
-    'prettier/@typescript-eslint',
+    'airbnb-typescript',
     'plugin:prettier/recommended',
+    'prettier/@typescript-eslint',
     'prettier/react',
   ],
   globals: {
@@ -19,45 +16,21 @@ module.exports = {
     test: 'readonly',
   },
   parserOptions: {
-    ecmaVersion: 2018,
     project: './tsconfig.json',
-    tsconfigRootDir: '.',
   },
   parser: '@typescript-eslint/parser',
   rules: {
-    'prettier/prettier': 'error',
-
-    // Here's some rules from this dude: https://gist.github.com/1natsu172/a65a4b45faed2bd3fa74b24163e4256e
-    /**
-     * @bug https://github.com/benmosher/eslint-plugin-import/issues/1282
-     * "import/named" temporary disable.
-     */
-    // 'import/named': 'off',
-    /**
-     * @bug?
-     * "import/export" temporary disable.
-     */
-    // 'import/export': 'off',
-    // 'import/prefer-default-export': 'off', // Allow single Named-export
-    // 'no-unused-expressions': [
-    //   'warn',
-    //   {
-    //     allowShortCircuit: true,
-    //     allowTernary: true,
-    //   },
-    // ], // https://eslint.org/docs/rules/no-unused-expressions
-
-    /**
-     * @description rules of @typescript-eslint
-     */
-    // '@typescript-eslint/prefer-interface': 'off', // also want to use "type"
-    '@typescript-eslint/explicit-function-return-type': 'off', // annoying to force return type
-
-    '@typescript-eslint/ban-ts-ignore': 'off',
     'react/prop-types': 'off',
 
     // My preferences
     'no-alert': 'off',
+    'no-param-reassign': [
+      'error',
+      {
+        props: true,
+        ignorePropertyModificationsFor: ['store'],
+      },
+    ],
     'no-plusplus': 'off',
     'react/jsx-filename-extension': 'off',
     'react/state-in-constructor': 'off',

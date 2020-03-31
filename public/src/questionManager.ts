@@ -175,6 +175,7 @@ export const handlePlaceTap: PlaceTapEventHandler = (e = <PlaceTapEvent>{}) => {
     // No answer attempted
     score = 0;
   } else if (
+    // TODO (davidg): why not ID?
     e.feature.properties.name === store.currentQuestion.properties.name
   ) {
     // Answer is exactly correct
@@ -235,21 +236,4 @@ export const handlePlaceTap: PlaceTapEventHandler = (e = <PlaceTapEvent>{}) => {
   };
 
   store.displayPhase = DisplayPhase.ANSWER;
-};
-
-export const getPageStats = () => {
-  const now = store.sessionQueue.size;
-  let unseen = 0;
-
-  store.questionFeatures.forEach((feature) => {
-    const isInQueue = store.sessionQueue.has(feature.id);
-
-    if (!feature.properties.nextAskDate && !isInQueue) {
-      unseen++;
-    }
-  });
-
-  const later = store.questionFeatures.size - unseen - now;
-
-  return { now, later, unseen };
 };
